@@ -803,30 +803,26 @@ class SeoPlugin extends Plugin
 
     private function applyOpenGraphMeta(Page $page, array $meta, string $cleanedMarkdown, $config): array
     {
-        if (!property_exists($page->header(), 'facebookenable') || $page->header()->facebookenable != 'true') {
-            return $meta;
-        }
-        $meta['og:site_name'] = ['property' => 'og:site_name', 'content' => $this->config->get('site.title')];
-        $meta['og:title']     = ['property' => 'og:title', 'content' => $page->header()->facebooktitle ?? $page->title()];
-        $lang = $this->grav['language']->getLanguage() ?: 'en';
+        $facebookEnabled = property_exists($page->header(), 'facebookenable') && $page->header()->facebookenable == 'true';
+
+        // Basic OG tags — always emitted so social previews work without per-page config
+        $lang   = $this->grav['language']->getLanguage() ?: 'en';
         $locale = self::$LOCALE_MAP[$lang] ?? ($lang . '_' . strtoupper($lang));
-        $meta['og:locale'] = ['property' => 'og:locale', 'content' => $locale];
-        if (isset($config['facebookid'])) {
-            $meta['fb:app_id'] = ['property' => 'fb:app_id', 'content' => $config->facebookid];
-        }
         $ogType = (property_exists($page->header(), 'articleenabled') && $page->header()->articleenabled)
             ? 'article'
             : 'website';
-        $meta['og:type'] = ['property' => 'og:type', 'content' => $ogType];
-        $meta['og:url']  = ['property' => 'og:url',  'content' => $this->grav['page']->canonical(true)];
-        $fbdesc = isset($page->header()->facebookdesc)
+        $meta['og:site_name'] = ['property' => 'og:site_name', 'content' => $this->config->get('site.title')];
+        $meta['og:locale']    = ['property' => 'og:locale',    'content' => $locale];
+        $meta['og:type']      = ['property' => 'og:type',      'content' => $ogType];
+        $meta['og:url']       = ['property' => 'og:url',       'content' => $this->grav['page']->canonical(true)];
+        $meta['og:title']     = ['property' => 'og:title',     'content' => ($facebookEnabled ? $page->header()->facebooktitle ?? null : null) ?? $page->title()];
+        $fbdesc = ($facebookEnabled && isset($page->header()->facebookdesc))
             ? substr($this->cleanMarkdown($page->header()->facebookdesc), 0, 320)
             : $cleanedMarkdown;
         $meta['og:description'] = ['property' => 'og:description', 'content' => $fbdesc];
-        if (isset($page->header()->facebookauthor)) {
-            $meta['article:author'] = ['property' => 'article:author', 'content' => $page->header()->facebookauthor];
-        }
-        if (isset($page->header()->facebookimg)) {
+
+        // Image: per-page pick → page media → global fallback
+        if ($facebookEnabled && isset($page->header()->facebookimg)) {
             $imagedata = $this->seoGetimage($page->header()->facebookimg);
             $meta['og:image'] = ['property' => 'og:image', 'content' => $this->grav['uri']->base() . $imagedata['url']];
         } elseif (!empty($page->media()->images())) {
@@ -836,6 +832,17 @@ class SeoPlugin extends Plugin
         } elseif (!empty($this->config['plugins']['seo']['default_social_image'])) {
             $meta['og:image'] = ['property' => 'og:image', 'content' => $this->resolvePublicUrl($this->config['plugins']['seo']['default_social_image'])];
         }
+
+        // Facebook-specific extras — only when explicitly enabled per page
+        if ($facebookEnabled) {
+            if (isset($config['facebookid'])) {
+                $meta['fb:app_id'] = ['property' => 'fb:app_id', 'content' => $config->facebookid];
+            }
+            if (isset($page->header()->facebookauthor)) {
+                $meta['article:author'] = ['property' => 'article:author', 'content' => $page->header()->facebookauthor];
+            }
+        }
+
         return $meta;
     }
 
