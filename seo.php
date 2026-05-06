@@ -195,6 +195,7 @@ class SeoPlugin extends Plugin
         $meta = $this->applyOpenGraphMeta($page, $meta, $cleanedMarkdown, $config);
         $page->metadata($meta);
 
+        array_push($microdata, ...$this->buildBreadcrumbMicrodata($page));
         array_push($microdata, ...$this->buildMusicEventMicrodata($page));
         array_push($microdata, ...$this->buildEventMicrodata($page));
         array_push($microdata, ...$this->buildPersonMicrodata($page));
@@ -228,6 +229,39 @@ class SeoPlugin extends Plugin
         $this->grav['twig']->twig_vars['myvar'] = $outputjson;
         $this->jsonLdOutput = $outputjson;
         $this->canonicalUrl = $page->canonical(true);
+    }
+
+    private function buildBreadcrumbMicrodata(Page $page): array
+    {
+        $ancestors = $page->parents();
+        // Only emit breadcrumbs when there is at least one ancestor above root
+        if (empty($ancestors) || count($ancestors) < 2) {
+            return [];
+        }
+
+        $items   = [];
+        $position = 1;
+        foreach (array_reverse($ancestors) as $ancestor) {
+            if ($ancestor->root()) continue;
+            $items[] = [
+                '@type'    => 'ListItem',
+                'position' => $position++,
+                'name'     => $ancestor->title(),
+                'item'     => $ancestor->canonical(true),
+            ];
+        }
+        $items[] = [
+            '@type'    => 'ListItem',
+            'position' => $position,
+            'name'     => $page->title(),
+            'item'     => $page->canonical(true),
+        ];
+
+        return [[
+            '@context'        => 'https://schema.org',
+            '@type'           => 'BreadcrumbList',
+            'itemListElement' => $items,
+        ]];
     }
 
     private function buildMusicEventMicrodata(Page $page): array
