@@ -581,27 +581,34 @@ private function seoGetImage(?string $imageUrl): array
 }
         if (property_exists($page->header(),'orgaenabled')){
        if ($page->header()->orgaenabled and $this->config['plugins']['seo']['organization']) {
+        $founderarray    = [];
+        $similararray    = [];
+        $areaservedarray = [];
+        $openingHours    = [];
+        $offerarray      = [];
+        $orgarating      = null;
+
         if (isset($page->header()->orga['founders'])){
         foreach ($page->header()->orga['founders'] as $founder){
                   $founderarray[] = [
                       '@type' => 'Person',
-                      'name' => @$founder['name'],
-                    ];    
+                      'name' => $founder['name'] ?? null,
+                    ];
                  }
         }
         if (isset($page->header()->orga['similar'])){
             foreach ($page->header()->orga['similar'] as $similar){
-                      $similararray[] = $similar['sameas'];    
+                      $similararray[] = $similar['sameas'];
                      }
         }
         if (isset($page->header()->orga['areaserved'])){
             foreach ($page->header()->orga['areaserved'] as $areaserved){
-                      $areaservedarray[] = $areaserved['area']; 
+                      $areaservedarray[] = $areaserved['area'];
                      }
-        }   
+        }
         if (isset($page->header()->orga['openingHours'])){
             foreach ($page->header()->orga['openingHours'] as $hours){
-                      $openingHours[] = $hours['entry'];    
+                      $openingHours[] = $hours['entry'];
                      }
         }
         if (isset($page->header()->orga['offercatalog'])){
@@ -610,16 +617,16 @@ private function seoGetImage(?string $imageUrl): array
                     foreach ($offer['offereditem'] as $service) {
                         $offerarray[] = [
                             '@type' => 'OfferCatalog',
-                            'name' => @$offer['offer'],
-                            'description' => @$offer['description'],
-                            'url' => @$offer['url'],
-                            'image' => @$offer['image'],
+                            'name' => $offer['offer'] ?? null,
+                            'description' => $offer['description'] ?? null,
+                            'url' => $offer['url'] ?? null,
+                            'image' => $offer['image'] ?? null,
                             'itemListElement' => [
                                 '@type' => 'Offer',
                                 'itemOffered' => [
                                     '@type' => 'Service',
-                                    'name' => @$service['name'],
-                                    'url' => @$service['url'],
+                                    'name' => $service['name'] ?? null,
+                                    'url' => $service['url'] ?? null,
                                 ],
                             ],
                         ];
@@ -627,10 +634,10 @@ private function seoGetImage(?string $imageUrl): array
                 } else {
                         $offerarray[] = [
                             '@type' => 'OfferCatalog',
-                            'name' => @$offer['offer'],
-                            'description' => @$offer['description'],
-                            'url' => @$offer['url'],
-                            'image' => @$offer['image'],
+                            'name' => $offer['offer'] ?? null,
+                            'description' => $offer['description'] ?? null,
+                            'url' => $offer['url'] ?? null,
+                            'image' => $offer['image'] ?? null,
                         ];
                 }
             }
@@ -641,44 +648,45 @@ private function seoGetImage(?string $imageUrl): array
         if ($page->header()->orgaratingenabled){
         $orgarating = [
                       '@type' => 'AggregateRating',
-                      'ratingValue' => @$page->header()->orga['ratingValue'],
-                      'reviewCount' => @$page->header()->orga['reviewCount'],
+                      'ratingValue' => $page->header()->orga['ratingValue'] ?? null,
+                      'reviewCount' => $page->header()->orga['reviewCount'] ?? null,
                       ];
-        } 
+        }
 
-        } 
+        }
+        $orga = $page->header()->orga ?? [];
         $microdata[] = [
                   '@context' => 'http://schema.org',
                   '@type' => 'Organization',
-                  'name' => @$page->header()->orga['name'],
-                  'legalname' => @$page->header()->orga['legalname'],
-                  'taxid' => @$page->header()->orga['taxid'],
-                  'vatid' => @$page->header()->orga['vatid'],
-                  'areaServed' => @$areaservedarray,
-                  'description' => @$page->header()->orga['description'],
-                  
+                  'name' => $orga['name'] ?? null,
+                  'legalname' => $orga['legalname'] ?? null,
+                  'taxid' => $orga['taxid'] ?? null,
+                  'vatid' => $orga['vatid'] ?? null,
+                  'areaServed' => $areaservedarray ?: null,
+                  'description' => $orga['description'] ?? null,
+
                   'address' => [
                       '@type' => 'PostalAddress',
-                      'streetAddress' => @$page->header()->orga['streetaddress'],
-                      'addressLocality' => @$page->header()->orga['city'],
-                      'addressRegion' => @$page->header()->orga['state'],
-                      'postalCode' => @$page->header()->orga['zipcode'],
+                      'streetAddress' => $orga['streetaddress'] ?? null,
+                      'addressLocality' => $orga['city'] ?? null,
+                      'addressRegion' => $orga['state'] ?? null,
+                      'postalCode' => $orga['zipcode'] ?? null,
                       ],
-                  'telephone' => @$page->header()->orga['phone'],
-                  'logo' => @$page->header()->orga['logo'],
-                  'url' => @$page->header()->orga['url'],
-                  'openingHours' => @$openingHours,
-                  'email' => @$page->header()->orga['email'],
-                  'foundingDate' => @$page->header()->orga['foundingDate'],
-                  'aggregateRating' => @$orgarating,
-                  'paymentAccepted' => @$page->header()->orga['paymentAccepted'],
-                  'founders' => @$founderarray,
-                  'sameAs' => @$similararray,
-                  'hasOfferCatalog' => @$offerarray
+                  'telephone' => $orga['phone'] ?? null,
+                  'logo' => $orga['logo'] ?? null,
+                  'url' => $orga['url'] ?? null,
+                  'openingHours' => $openingHours ?: null,
+                  'email' => $orga['email'] ?? null,
+                  'foundingDate' => $orga['foundingDate'] ?? null,
+                  'aggregateRating' => $orgarating,
+                  'paymentAccepted' => $orga['paymentAccepted'] ?? null,
+                  'founders' => $founderarray ?: null,
+                  'sameAs' => $similararray ?: null,
+                  'hasOfferCatalog' => $offerarray ?: null,
                   ];
-                 
-                  
-           
+
+
+
        }
        }
         if (property_exists($page->header(),'restaurantenabled')){
