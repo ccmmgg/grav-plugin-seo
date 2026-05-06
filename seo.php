@@ -660,20 +660,17 @@ class SeoPlugin extends Plugin
      * @param Event $event
      */
     public function onBlueprintCreated(Event $event)
- {
-     $newtype = $event['type'];
-     if (0 === strpos($newtype, 'modular/')) {
-        } else {
-            $blueprint = $event['blueprint'];
+    {
+        $newtype = $event['type'];
+        if (0 === strpos($newtype, 'modular/')) {
+            return;
+        }
+        $blueprint = $event['blueprint'];
         if ($blueprint->get('form/fields/tabs', null, '/')) {
-            
             $blueprints = new Blueprints(__DIR__ . '/blueprints/');
-            $extends = $blueprints->get($this->name);
+            $extends    = $blueprints->get($this->name);
             $blueprint->extend($extends, true);
-        
         }
-        }
-        
     }
 
 
