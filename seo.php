@@ -430,7 +430,7 @@ private function seoGetImage(?string $imageUrl): array
 
                 // Construction de l'événement
                 $eventData = [
-                    '@context' => 'http://schema.org',
+                    '@context' => 'https://schema.org',
                     '@type' => 'MusicEvent',
                     'name' => $event['musicevent_location_name'] ?? '',
                     'location' => [
@@ -511,7 +511,7 @@ private function seoGetImage(?string $imageUrl): array
 
                 // Construction de l'événement de base
                 $eventData = [
-                    '@context' => 'http://schema.org',
+                    '@context' => 'https://schema.org',
                     '@type' => 'Event',
                     'name' => $event['event_name'] ?? '',
                     'location' => [
@@ -565,7 +565,7 @@ private function seoGetImage(?string $imageUrl): array
         if (is_array($personarray) && !empty($personarray)) {
             foreach ($personarray as $person) {
                 $microdata[] = [
-                    '@context' => 'http://schema.org',
+                    '@context' => 'https://schema.org',
                     '@type' => 'Person',
                     'name' => $person['person_name'] ?? null,
                     'address' => [
@@ -656,7 +656,7 @@ private function seoGetImage(?string $imageUrl): array
         }
         $orga = $page->header()->orga ?? [];
         $microdata[] = [
-                  '@context' => 'http://schema.org',
+                  '@context' => 'https://schema.org',
                   '@type' => 'Organization',
                   'name' => $orga['name'] ?? null,
                   'legalname' => $orga['legalname'] ?? null,
@@ -705,7 +705,7 @@ private function seoGetImage(?string $imageUrl): array
                 
             }
               $microdata[] = [
-                  '@context' => 'http://schema.org',
+                  '@context' => 'https://schema.org',
                   '@type' => 'Restaurant',
                   'name' => @$page->header()->restaurant['name'],
                   
@@ -762,7 +762,7 @@ private function seoGetImage(?string $imageUrl): array
          else { $offer = ''; }       
             
               $microdata[] = [
-                  '@context' => 'http://schema.org',
+                  '@context' => 'https://schema.org',
                   '@type' => 'Product',
                   'name' => @$page->header()->product['name'],
                   'category' => @$page->header()->product['category'],
@@ -790,7 +790,7 @@ private function seoGetImage(?string $imageUrl): array
             }
        if ($page->header()->articleenabled and $this->config['plugins']['seo']['article']) {
         $microdata['article'] = [
-    '@context' => 'http://schema.org',
+    '@context' => 'https://schema.org',
     '@type' => 'Article',
     'headline' => $headline,
     'mainEntityOfPage' => [
