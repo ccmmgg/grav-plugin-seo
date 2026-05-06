@@ -54,7 +54,6 @@ PLUGIN_SEO:
   INSTOCK: "Auf Lager"
   DISCONTINUED: "Abgekündigt"
   INSTOREONLY: "Nur im Lager"
-  OUTOFSTOCK: "Nicht auf Lager"
   SOLDOUT: "Ausverkauft"
   ONLINEONLY: "Nur online"
   TICKET_URL: "Ticket-URL"
