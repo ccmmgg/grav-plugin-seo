@@ -686,6 +686,23 @@ class SeoPlugin extends Plugin
         return $meta;
     }
 
+    private static array $LOCALE_MAP = [
+        'af' => 'af_ZA', 'ar' => 'ar_AR', 'az' => 'az_AZ', 'be' => 'be_BY',
+        'bg' => 'bg_BG', 'bs' => 'bs_BA', 'ca' => 'ca_ES', 'cs' => 'cs_CZ',
+        'cy' => 'cy_GB', 'da' => 'da_DK', 'de' => 'de_DE', 'el' => 'el_GR',
+        'en' => 'en_US', 'eo' => 'eo_EO', 'es' => 'es_ES', 'et' => 'et_EE',
+        'eu' => 'eu_ES', 'fa' => 'fa_IR', 'fi' => 'fi_FI', 'fr' => 'fr_FR',
+        'gl' => 'gl_ES', 'he' => 'he_IL', 'hr' => 'hr_HR', 'hu' => 'hu_HU',
+        'hy' => 'hy_AM', 'id' => 'id_ID', 'is' => 'is_IS', 'it' => 'it_IT',
+        'ja' => 'ja_JP', 'ka' => 'ka_GE', 'kk' => 'kk_KZ', 'ko' => 'ko_KR',
+        'lt' => 'lt_LT', 'lv' => 'lv_LV', 'mk' => 'mk_MK', 'ms' => 'ms_MY',
+        'mt' => 'mt_MT', 'nl' => 'nl_NL', 'nn' => 'nn_NO', 'no' => 'nb_NO',
+        'pl' => 'pl_PL', 'pt' => 'pt_PT', 'ro' => 'ro_RO', 'ru' => 'ru_RU',
+        'sk' => 'sk_SK', 'sl' => 'sl_SI', 'sq' => 'sq_AL', 'sr' => 'sr_RS',
+        'sv' => 'sv_SE', 'th' => 'th_TH', 'tr' => 'tr_TR', 'uk' => 'uk_UA',
+        'uz' => 'uz_UZ', 'vi' => 'vi_VN', 'zh' => 'zh_CN',
+    ];
+
     private function applyOpenGraphMeta(Page $page, array $meta, string $cleanedMarkdown, $config): array
     {
         if (!property_exists($page->header(), 'facebookenable') || $page->header()->facebookenable != 'true') {
@@ -693,6 +710,9 @@ class SeoPlugin extends Plugin
         }
         $meta['og:site_name'] = ['property' => 'og:site_name', 'content' => $this->config->get('site.title')];
         $meta['og:title']     = ['property' => 'og:title', 'content' => $page->header()->facebooktitle ?? $page->title()];
+        $lang = $this->grav['language']->getLanguage() ?: 'en';
+        $locale = self::$LOCALE_MAP[$lang] ?? ($lang . '_' . strtoupper($lang));
+        $meta['og:locale'] = ['property' => 'og:locale', 'content' => $locale];
         if (isset($config['facebookid'])) {
             $meta['fb:app_id'] = ['property' => 'fb:app_id', 'content' => $config->facebookid];
         }
