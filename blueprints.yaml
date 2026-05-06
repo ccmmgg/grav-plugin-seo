@@ -2,6 +2,7 @@ name: "Beacon"
 version: "3.1.0"
 description: "Manage your site’s meta tags, Open Graph, Twitter Cards, and Schema.org JSON-LD structured data. Includes a live preview feature."
 icon: "bullhorn"
+testing: false
 author:
   name: "Charlie"
 homepage: "https://github.com/ccmmgg/grav-plugin-seo"
