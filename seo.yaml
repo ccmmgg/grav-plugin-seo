@@ -6,3 +6,32 @@ event: true
 organization: true
 musicevent: true
 person: true
+
+# Global social image fallback — used when a page has no image and no page media
+default_social_image: ''
+
+# Global article publisher defaults (used when per-page fields are empty)
+publisher_name: ''
+publisher_logo: ''
+
+# Global article author default — fallback after header.article.author and header.author
+default_author: ''
+
+# Global organization defaults (used when per-page orga fields are absent)
+organization_on_all_pages: false
+organization:
+  name: ''
+  legalname: ''
+  taxid: ''
+  vatid: ''
+  description: ''
+  streetaddress: ''
+  city: ''
+  state: ''
+  zipcode: ''
+  phone: ''
+  url: ''
+  logo: ''
+  email: ''
+  foundingDate: ''
+  paymentAccepted: ''

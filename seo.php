@@ -616,14 +616,23 @@ class SeoPlugin extends Plugin
             'description'       => $article['description'] ?? substr($content, 0, 140),
         ];
 
-        if (isset($article['author'])) {
-            $microdata['author'] = $article['author'];
+        $author = $article['author']
+            ?? ($page->header()->author ?? null)
+            ?? ($this->config['plugins']['seo']['default_author'] ?? null)
+            ?: $this->config->get('site.author.name');
+        if (!empty($author)) {
+            $microdata['author'] = $author;
         }
-        if (isset($article['publisher_name'])) {
-            $microdata['publisher'] = ['@type' => 'Organization', 'name' => $article['publisher_name']];
+
+        $publisherName = $article['publisher_name']
+            ?? ($this->config['plugins']['seo']['publisher_name'] ?? null);
+        $publisherLogo = $article['publisher_logo_url']
+            ?? ($this->config['plugins']['seo']['publisher_logo'] ?? null);
+        if (!empty($publisherName)) {
+            $microdata['publisher'] = ['@type' => 'Organization', 'name' => $publisherName];
         }
-        if (isset($article['publisher_logo_url'])) {
-            $imagedata = $this->seoGetimage($article['publisher_logo_url']);
+        if (!empty($publisherLogo)) {
+            $imagedata = $this->seoGetimage($publisherLogo);
             $microdata['publisher']['logo'] = [
                 '@type'  => 'ImageObject',
                 'url'    => $this->grav['uri']->base() . $imagedata['url'],
@@ -712,6 +721,11 @@ class SeoPlugin extends Plugin
                 'name' => 'twitter:image', 'property' => 'twitter:image',
                 'content' => $this->grav['uri']->base() . $first->url(),
             ];
+        } elseif (!empty($this->config['plugins']['seo']['default_social_image'])) {
+            $meta['twitter:image'] = [
+                'name' => 'twitter:image', 'property' => 'twitter:image',
+                'content' => $this->config['plugins']['seo']['default_social_image'],
+            ];
         }
         $meta['twitter:url'] = ['name' => 'twitter:url', 'property' => 'twitter:url', 'content' => $page->url(true)];
         return $meta;
@@ -766,6 +780,8 @@ class SeoPlugin extends Plugin
             $images = $page->media()->images();
             $first  = array_shift($images);
             $meta['og:image'] = ['property' => 'og:image', 'content' => $this->grav['uri']->base() . $first->url()];
+        } elseif (!empty($this->config['plugins']['seo']['default_social_image'])) {
+            $meta['og:image'] = ['property' => 'og:image', 'content' => $this->config['plugins']['seo']['default_social_image']];
         }
         return $meta;
     }
