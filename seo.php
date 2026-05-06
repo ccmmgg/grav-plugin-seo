@@ -691,93 +691,80 @@ private function seoGetImage(?string $imageUrl): array
        }
         if (property_exists($page->header(),'restaurantenabled')){
         if ($page->header()->restaurantenabled and $this->config['plugins']['seo']['restaurant']) {
-         if (isset($page->header()->restaurant['image'])){
-            $imageurl = $page->header()->restaurant['image'];
-            $imagedata = $this->seoGetimage($imageurl);
+         $restaurantimage = null;
+         $restaurant = $page->header()->restaurant ?? [];
+         if (isset($restaurant['image'])){
+            $imagedata = $this->seoGetimage($restaurant['image']);
             $restaurantimage = [
-                 
                       '@type' => 'ImageObject',
                       'width' => $imagedata['width'],
                       'height' => $imagedata['height'],
-                      'url' => $this->grav['uri']->base() .  $imagedata['url'],
-                      
+                      'url' => $this->grav['uri']->base() . $imagedata['url'],
                       ];
-                
             }
               $microdata[] = [
                   '@context' => 'https://schema.org',
                   '@type' => 'Restaurant',
-                  'name' => @$page->header()->restaurant['name'],
-                  
+                  'name' => $restaurant['name'] ?? null,
                   'address' => [
                       '@type' => 'PostalAddress',
-                      'addressLocality' => @$page->header()->restaurant['address_addressLocality'],
-                      'addressRegion' => @$page->header()->restaurant['address_addressRegion'],
-                      'streetAddress' => @$page->header()->restaurant['address_streetAddress'],
-                      'postalCode' => @$page->header()->restaurant['address_postalCode'],
+                      'addressLocality' => $restaurant['address_addressLocality'] ?? null,
+                      'addressRegion' => $restaurant['address_addressRegion'] ?? null,
+                      'streetAddress' => $restaurant['address_streetAddress'] ?? null,
+                      'postalCode' => $restaurant['address_postalCode'] ?? null,
                       ],
-                  'areaserved' => @$areaservedarray,
-                  'servesCuisine' => @$page->header()->restaurant['servesCuisine'],
-                  'priceRange' => @$page->header()->restaurant['priceRange'],
-                  'image' => @$restaurantimage,
-                  'telephone' => @$page->header()->restaurant['telephone'],
-                  
+                  'areaServed' => $areaservedarray ?? null,
+                  'servesCuisine' => $restaurant['servesCuisine'] ?? null,
+                  'priceRange' => $restaurant['priceRange'] ?? null,
+                  'image' => $restaurantimage,
+                  'telephone' => $restaurant['telephone'] ?? null,
                   ];
-            
 
        }
         }
     if (property_exists($page->header(),'productenabled')){
         if ($page->header()->productenabled and $this->config['plugins']['seo']['product']) {
-         if (isset($page->header()->product['image'])){
-             $productimagearray = []; 
-             $productimages = $page->header()->product['image'];
-            
-            
-             foreach ($productimages as $key => $value){
-            $imagearray = $productimages[$key];
-            foreach($imagearray as $newkey => $newvalue){
-                $imagedata = $this->seoGetimage($imagearray[$newkey]);
-                $productimage[] = 
-                $this->grav['uri']->base() .  $imagedata['url'];
-               
-            };
-            
-             };
+         $product = $page->header()->product ?? [];
+         $productimage = [];
+         $offer = [];
+
+         if (isset($product['image'])){
+             foreach ($product['image'] as $imagearray){
+                 foreach ($imagearray as $imagepath){
+                     $imagedata = $this->seoGetimage($imagepath);
+                     $productimage[] = $this->grav['uri']->base() . $imagedata['url'];
+                 }
+             }
          }
-         if (isset($page->header()->product['addoffer'])){
-             
-             $offers = $page->header()->product['addoffer'];
-             foreach ($offers as $key => $value){
+         if (isset($product['addoffer'])){
+             foreach ($product['addoffer'] as $key => $offerdata){
                  $offer[$key] = [
                       '@type' => 'Offer',
-                      'priceCurrency' => @$offers[$key]['offer_priceCurrency'],
-                      'price' => @$offers[$key]['offer_price'],
-                      'validFrom' => @$offers[$key]['offer_validFrom'],
-                      'priceValidUntil' => @$offers[$key]['offer_validUntil'],
-                      'availability' => @$offers[$key]['offer_availability'],
+                      'priceCurrency' => $offerdata['offer_priceCurrency'] ?? null,
+                      'price' => $offerdata['offer_price'] ?? null,
+                      'validFrom' => $offerdata['offer_validFrom'] ?? null,
+                      'priceValidUntil' => $offerdata['offer_validUntil'] ?? null,
+                      'availability' => $offerdata['offer_availability'] ?? null,
                      ];
-             };
+             }
          }
-         else { $offer = ''; }       
-            
+
               $microdata[] = [
                   '@context' => 'https://schema.org',
                   '@type' => 'Product',
-                  'name' => @$page->header()->product['name'],
-                  'category' => @$page->header()->product['category'],
+                  'name' => $product['name'] ?? null,
+                  'category' => $product['category'] ?? null,
                   'brand' => [
                       '@type' => 'Thing',
-                      'name' => @$page->header()->product['brand'],
+                      'name' => $product['brand'] ?? null,
                       ],
-                  'offers' => $offer,
-                  'description' => @$page->header()->product['description'],
-                  'image' => @$productimage,
+                  'offers' => $offer ?: null,
+                  'description' => $product['description'] ?? null,
+                  'image' => $productimage ?: null,
                   'aggregateRating' => [
                       '@type' => 'AggregateRating',
-                      'ratingValue' => @$page->header()->product['ratingValue'],
-                      'reviewCount' => @$page->header()->product['reviewCount'],
-                      
+                      'ratingValue' => $product['ratingValue'] ?? null,
+                      'reviewCount' => $product['reviewCount'] ?? null,
                       ]
                   ];
        }
@@ -813,7 +800,7 @@ private function seoGetImage(?string $imageUrl): array
            };
            if (isset($page->header()->article['publisher_name'])) {
             $microdata['article']['publisher']['@type'] = 'Organization';
-            $microdata['article']['publisher']['name'] = @$page->header()->article['publisher_name'];
+            $microdata['article']['publisher']['name'] = $page->header()->article['publisher_name'];
            };
            if (isset($page->header()->article['publisher_logo_url'])) {
             $publisherlogourl = $page->header()->article['publisher_logo_url'];
@@ -843,7 +830,7 @@ private function seoGetImage(?string $imageUrl): array
     }*/
     // $microdata = array_map('array_filter', $microdata);
     $microdata = $this->cleanArray($microdata);
-    $customjson = @$page->header()->add_json;
+    $customjson = $page->header()->add_json ?? null;
      foreach ($microdata as $key => $value){
         
         
