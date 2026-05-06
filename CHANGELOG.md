@@ -1,3 +1,26 @@
+# v3.1.0
+## 05/05/2026
+1. [](#new)
+    * Rebranded as Beacon
+    * Added `<link rel="canonical">` injection on every page
+    * Added `og:locale` to Open Graph meta, derived from Grav active language
+    * Added BreadcrumbList JSON-LD structured data, built automatically from page ancestry
+    * Added `og:type` now correctly defaults to `website` and only emits `article` when Article microdata is enabled
+2. [](#fix)
+    * Fixed JSON-LD injection: replaced broken `addInlineJs` workaround with `onOutputGenerated` + `str_replace`
+    * Fixed Facebook fallback image incorrectly populating `twitter:image` instead of `og:image`
+    * Fixed uninitialized variables and `@` error suppression throughout (organization, restaurant, product, article blocks)
+    * Fixed schema.org context URLs: `http` → `https`
+    * Fixed incorrect Article `datePublished` field reference
+    * Fixed duplicate `OUTOFSTOCK` key in `de.yaml`
+3. [](#breaking)
+    * `templates/partials/seo_data.html.twig` is now an empty stub — all output is handled by PHP. Including this partial while the plugin is active previously produced duplicate tags.
+4. [](#refactor)
+    * Extracted all schema type logic into individual private builder methods
+    * Extracted meta tag logic into `applyGoogleMeta`, `applyTwitterMeta`, `applyOpenGraphMeta`
+    * Translated all French comments and docblocks to English
+    * Removed all `@` error suppression in favour of `?? null` / `?? []`
+
 # v2.3.6
 ## 09/14/2018
 1. [](#new)
