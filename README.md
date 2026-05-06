@@ -1,55 +1,46 @@
-# ![Grav SEO Plugin](https://github.com/paulmassen/grav-plugin-seo/blob/master/assets/logoseo.png?raw=true)
+# Beacon — Grav SEO Plugin
 
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MX77VZWPUKLTU)
+A Grav CMS plugin for managing SEO meta tags, Open Graph, Twitter Cards, and Schema.org JSON-LD structured data from the admin panel.
 
-##### Table of Contents:
+Originally based on [grav-plugin-seo](https://github.com/paulmassen/grav-plugin-seo) by Paul Massendari.
 
+## Table of Contents
 
-* [About](#about)
 * [Features](#features)
-* [Installation and Updates](#installation-and-updates)
 * [Requirements](#requirements)
+* [Installation](#installation)
+* [Configuration](#configuration)
 * [Usage](#usage)
 * [Contributing](#contributing)
 * [License](#license)
 
-
-## About
-
-`Seo` is an user-friendly plugin for [GetGrav.org](http://getgrav.org) used to manage all your metatags in order to customize your pages appearance in Search Engine Results or social networks. The plugin also allows the generation of JSON-LD Microdata.
-
 ## Features
 
-### Google
-You can see and customize how your page will look on Google Search Results.
+- **Google** — customize your page title and meta description as they appear in search results
+- **Twitter Cards** — control title, description, and image when shared on Twitter/X
+- **Open Graph** — control appearance on Facebook, LinkedIn, and other OG-aware platforms; includes `og:locale` from your Grav language settings
+- **Canonical URL** — automatically injects `<link rel="canonical">` on every page
+- **JSON-LD Structured Data** — generate Schema.org microdata for:
+  - Article
+  - BreadcrumbList (automatic, from page ancestry)
+  - Event
+  - MusicEvent
+  - Organization
+  - Person
+  - Product
+  - Restaurant
+  - Custom JSON
 
-![Grav SEO Plugin](https://raw.githubusercontent.com/paulmassen/grav-plugin-seo/master/assets/demoseoplugin.gif)
+### Example JSON-LD output
 
-### Twitter
-You can also preview how your page will look when shared on twitter
-
-![Grav SEO Plugin](https://raw.githubusercontent.com/paulmassen/grav-plugin-seo/master/assets/twitter.gif)
-
-
-### Facebook
-And on Facebook
-
-![Facebook Live Preview](https://raw.githubusercontent.com/paulmassen/grav-plugin-seo/master/assets/facebook.gif)
-
-
-### JSON-LD
-
-You can also generate Schema.org JSON Microdata from the admin.
-![Article Microdata](https://raw.githubusercontent.com/paulmassen/grav-plugin-seo/master/assets/article_json.png)
-This will generate the following Json-ld between script tags
-```JSON
+```json
 {
-    "@context": "http://schema.org",
+    "@context": "https://schema.org",
     "@type": "Article",
     "headline": "Article Title",
     "mainEntityOfPage": {
         "@type": "WebPage",
-        "url": "http://yourwebsite.com"
+        "url": "https://yourwebsite.com"
     },
     "articleBody": "Lorem Ipsum dolor sit amet",
     "datePublished": "2017-12-01T00:00:00+00:00",
@@ -61,14 +52,14 @@ This will generate the following Json-ld between script tags
         "name": "Apple",
         "logo": {
             "@type": "ImageObject",
-            "url": "http://yourwebsite.com/home/logo.png",
+            "url": "https://yourwebsite.com/home/logo.png",
             "width": "200",
             "height": "100"
         }
     },
     "image": {
         "@type": "ImageObject",
-        "url": "http://yourwebsite.com/home/myimage.jpg",
+        "url": "https://yourwebsite.com/home/myimage.jpg",
         "width": "800",
         "height": "600"
     }
@@ -77,59 +68,45 @@ This will generate the following Json-ld between script tags
 
 ## Requirements
 
-In order to use the plugin with a custom template, there is two requirements, you must:
-- Include in your base template the metadata template that comes shipped with antimatter, such as: `{% include 'partials/metadata.html.twig' %}`
-- For Microdatas, you must use Grav's asset manager. If your template has a line with `{{ assets.js() }}`, it will works.
-- The SEO tab extends the default blueprint, if it does not appear, make sure your blueprint extends the default blueprint with `extends@: default`
-#### Feedback needed
+- Grav >= 1.7.0
+- Admin plugin >= 1.10.0
+- Your base template must include the metadata partial: `{% include 'partials/metadata.html.twig' %}`
+- The SEO tab extends the default blueprint — ensure your page blueprint includes `extends@: default`
 
-As this plugin is in its early stage, please do not hesitate to leave a feedback, to suggest modification or features.
+## Installation
 
-### TO-DO
-
-- [ ] Add more Microdata type
-- [ ] Add Translations (Contribution welcomed!)
-- [x] Add the possibility to add multiple microdata of the same type
-- [ ] YoastSEO text analysis integration (WIP)
-- [ ] Add some microdata on every page
-
-
-
-
-## Installation and Updates
-
-### Updating from Previous releases
-
-As there is a lot of changes from previous releases, be careful when updating, as your previously set values might be lost.
-The previous version required to modify your base template, whereas the 2.0+ version of the plugin now adds metadata and microdata automatically to your existing Installation.
-
-Installing or updating the `SEO` plugin can be done in one of three ways. Using the GPM (Grav Package Manager) installation update method (i.e. `bin/gpm install seo`) or manual install by downloading [this plugin](https://github.com/paulmassen/grav-plugin-seo) and extracting all plugin files to
+Install manually by cloning or downloading this repository into:
 
     /your/site/grav/user/plugins/seo
 
-Once installed, the plugin will automatically set the metadata and append the json-ld microdatas to your document.
-If you plan on using the Twitter feature, make sure to fill your user ID in tab Plugins > SEO > Twitter ID
+The plugin injects all meta tags and structured data automatically. No template modifications required.
 
 ## Configuration
 
-Configuration is done through the plugin configuration page, accessible by clicking on Plugins > Seo. On this page, you can choose to enable the microdata fields you will use.
-Make sure to fill the Facebook ID field as well as the Twitter ID field, in order for your meta tags to be validated.
+Open **Plugins > Beacon** in the admin panel to:
+
+- Set your Facebook App ID and Twitter handle
+- Enable or disable individual microdata types
+
+Per-page settings are managed from the **SEO** tab on each page editor.
 
 ## Usage
 
-The `SEO` plugin appends a SEO tab on every pages where you can manage and define how your website will look on search engine results and on social networks. 
+The Beacon plugin adds an SEO tab to every page in the admin. From there you can:
 
+- Preview and customize how the page appears in Google search results
+- Set Twitter Card and Open Graph metadata
+- Enable and populate any supported Schema.org structured data type
+
+All output is injected directly into `<head>` by the plugin — no Twig template changes needed.
 
 ## Contributing
 
-You can contribute at any time! Before opening any issue, please search for existing issues!
+Issues and pull requests welcome at [github.com/ccmmgg/grav-plugin-seo](https://github.com/ccmmgg/grav-plugin-seo/issues).
 
-After that please note:
-
-* If you find a bug, would like to make a feature request or suggest an improvement, [please open a new issue][issues]. If you have any interesting ideas for additions to the syntax please do suggest them as well!
-* Feature requests are more likely to get attention if you include a clearly described use case.
-
-
+Please search existing issues before opening a new one.
 
 ## License
 
+MIT — see [LICENSE](LICENSE).
+Originally based on work copyright 2020 Paul Massendari.

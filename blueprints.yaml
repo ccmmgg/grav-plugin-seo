@@ -1,15 +1,13 @@
-name: "SEO"
-version: "3.0.0"
-description: "Manage your site’s meta tags for display in search engine results or social media networks. Includes an easy-to-use live preview feature."
-icon: "google"
-testing: true
+name: "Beacon"
+version: "3.1.0"
+description: "Manage your site’s meta tags, Open Graph, Twitter Cards, and Schema.org JSON-LD structured data. Includes a live preview feature."
+icon: "bullhorn"
 author:
-  name: "Paul Massendari"
-  email: "paul@massendari.com"
-homepage: "https://github.com/paulmassen/grav-plugin-seo"
-keywords: ["seo", "meta", "microdata", "schema", "plugin"]
-bugs: "https://github.com/paulmassen/grav-plugin-seo/issues"
-license: "MIT/GPL"
+  name: "Charlie"
+homepage: "https://github.com/ccmmgg/grav-plugin-seo"
+keywords: ["seo", "meta", "microdata", "schema", "open graph", "json-ld", "plugin"]
+bugs: "https://github.com/ccmmgg/grav-plugin-seo/issues"
+license: "MIT"
 dependencies:
     - { name: grav, version: '>=1.7.0' }
     - { name: admin, version: '>=1.10.0' }

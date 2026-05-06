@@ -1,16 +1,18 @@
 <?php
 /**
- * SEO v2.3.5
+ * Beacon v3.1.0
  *
- * This plugin adds an SEO Tab to every pages for managing SEO data.
+ * Grav plugin for managing SEO meta tags, Open Graph, Twitter Cards,
+ * and Schema.org JSON-LD structured data.
  *
+ * Originally based on grav-plugin-seo by Paul Massendari.
  * Licensed under the MIT license, see LICENSE.
  *
- * @package     SEO
- * @version     3.0
- * @link        <https://github.com/paulmassen/grav-plugin-seo>
- * @author      Paul Massendari <paul@massendari.com>
- * @copyright   2020, Paul Massendari
+ * @package     Beacon
+ * @version     3.1.0
+ * @link        <https://github.com/ccmmgg/grav-plugin-seo>
+ * @author      Charlie
+ * @copyright   2026, Charlie
  * @license     <http://opensource.org/licenses/MIT>        MIT
  */
 
