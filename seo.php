@@ -55,26 +55,22 @@ class SeoPlugin extends Plugin
         return [
             'onPluginsInitialized' => ['onPluginsInitialized', 0],
             'onPageInitialized'    => ['onPageInitialized', 0],
-           // 'onPageContentRaw' => ['onPageContentRaw', 0],
-          //  'onBlueprintCreated' => ['onBlueprintCreated',  0]
         ];
     }
 
-    private function cleanArray(array $array): array 
-{
-    foreach ($array as $key => &$value) {
-        if (is_array($value)) {
-            $value = $this->cleanArray($value);
+    private function cleanArray(array $array): array
+    {
+        foreach ($array as $key => &$value) {
+            if (is_array($value)) {
+                $value = $this->cleanArray($value);
+            }
+            if (empty($value) && $value !== 0 && $value !== '0') {
+                unset($array[$key]);
+            }
         }
-        
-        if (empty($value) && $value !== 0 && $value !== '0') {
-            unset($array[$key]);
-        }
+        return $array;
     }
-    
-    return $array;
-}
-  
+
     private function seoGetImage(?string $imageUrl): array
     {
         if (empty($imageUrl)) {
@@ -172,35 +168,32 @@ class SeoPlugin extends Plugin
             'onOutputGenerated'    => ['onOutputGenerated', 0],
         ];
 
-        // Set admin specific events
         if ($this->isAdmin()) {
             $this->active = false;
             $events = [
                 'onTwigTemplatePaths' => ['onTwigTemplatePaths', 0],
-                'onBlueprintCreated' => ['onBlueprintCreated', 0],
-               // 'onPageContentRaw' => ['onPageContentRaw', 0],
+                'onBlueprintCreated'  => ['onBlueprintCreated', 0],
             ];
         }
 
-        // Register events
-  
         $this->enable($events);
     }
+
     public function onPageInitialized()
     {
         $page = $this->grav['page'];
         $config = $this->mergeConfig($page);
         $content = strip_tags($page->content());
         $cleanedMarkdown = $this->cleanMarkdown($page->content());
-        $microdata = [];
-        $outputjson = '';
-        $outputcustomjson = '';
-        $meta = $page->metadata(null);
+        $microdata   = [];
+        $outputjson  = '';
+        $meta        = $page->metadata(null);
 
         $meta = $this->applyGoogleMeta($page, $meta, $cleanedMarkdown);
         $meta = $this->applyTwitterMeta($page, $meta, $cleanedMarkdown, $config);
         $meta = $this->applyOpenGraphMeta($page, $meta, $cleanedMarkdown, $config);
         $page->metadata($meta);
+
         array_push($microdata, ...$this->buildMusicEventMicrodata($page));
         array_push($microdata, ...$this->buildEventMicrodata($page));
         array_push($microdata, ...$this->buildPersonMicrodata($page));
