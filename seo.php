@@ -472,7 +472,7 @@ class SeoPlugin extends Plugin
         if (!$cfg['organization']) return $result;
 
         // Merge: global defaults, then page-level overrides on top
-        $globalOrga = $cfg['organization'] ?? [];
+        $globalOrga = $cfg['organization_defaults'] ?? [];
         $orga       = array_merge($globalOrga, $page->header()->orga ?? []);
         $founderarray    = [];
         $similararray    = [];

@@ -96,52 +96,52 @@ form:
         0: PLUGIN_ADMIN.DISABLED
       validate:
         type: bool
-    organization.name:
+    organization_defaults.name:
       type: text
       label: Organization Name
-    organization.legalname:
+    organization_defaults.legalname:
       type: text
       label: Registered Legal Name
-    organization.description:
+    organization_defaults.description:
       type: text
       label: Description
-    organization.url:
+    organization_defaults.url:
       type: text
       label: Website URL
       placeholder: 'https://yoursite.com'
-    organization.logo:
+    organization_defaults.logo:
       type: text
       label: Logo URL
       placeholder: 'https://yoursite.com/logo.png'
-    organization.email:
+    organization_defaults.email:
       type: email
       label: Email
-    organization.phone:
+    organization_defaults.phone:
       type: text
       label: Phone
-    organization.streetaddress:
+    organization_defaults.streetaddress:
       type: text
       label: Street Address
-    organization.city:
+    organization_defaults.city:
       type: text
       label: City
-    organization.state:
+    organization_defaults.state:
       type: text
       label: State / Region
-    organization.zipcode:
+    organization_defaults.zipcode:
       type: text
       label: Postal Code
-    organization.taxid:
+    organization_defaults.taxid:
       type: text
       label: Tax / Fiscal ID
-    organization.vatid:
+    organization_defaults.vatid:
       type: text
       label: VAT ID
-    organization.foundingDate:
+    organization_defaults.foundingDate:
       type: text
       label: Founding Year
       placeholder: '2010'
-    organization.paymentAccepted:
+    organization_defaults.paymentAccepted:
       type: text
       label: Payment Accepted
       placeholder: 'Visa, Cash, Credit Card'

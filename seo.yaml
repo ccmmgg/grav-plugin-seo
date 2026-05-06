@@ -19,7 +19,7 @@ default_author: ''
 
 # Global organization defaults (used when per-page orga fields are absent)
 organization_on_all_pages: false
-organization:
+organization_defaults:
   name: ''
   legalname: ''
   taxid: ''
