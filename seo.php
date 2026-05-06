@@ -234,153 +234,16 @@ private function seoGetImage(?string $imageUrl): array
         $page = $this->grav['page'];
         $config = $this->mergeConfig($page);
         $content = strip_tags($page->content());
-        $assets = $this->grav['assets'];
-        $customjson = "";
-        $outputcustomjson = "";
-        $pattern = '~((\/[^\/]+)+)\/([^\/]+)~';
-        $replacement = '$1';
-        $outputjson = "";
-        $uri = $this->grav['uri'];
-        $route = $this->config->get('plugins.admin.route');
-        $microdata = [];
-        $meta = $page->metadata(null);
         $cleanedMarkdown = $this->cleanMarkdown($page->content());
-       
-        if (isset($page->header()->googletitle)) {
-            $page->header()->displaytitle = $page->header()->title;  // Keep original title available for template use
-            $page->header()->title = $page->header()->googletitle;
-        };
-        if (isset($page->header()->googledesc)) {
-            
-            $meta['description']['name']      = 'description';
-            $meta['description']['content']   = $page->header()->googledesc;
-        
-        } else {
-            $meta['description']['name']      = 'description';
-            $meta['description']['content']   = $cleanedMarkdown;
-        };
-        
-             /**
-             * Set Twitter Metatags
-             */
+        $microdata = [];
+        $outputjson = '';
+        $outputcustomjson = '';
+        $meta = $page->metadata(null);
 
-        if (property_exists($page->header(),'twitterenable')) {
-        if ($page->header()->twitterenable == 'true') {
-        
-            if (isset($config['twitterid'])) {
-                $meta['twitter:site']['name']      = 'twitter:site';
-                $meta['twitter:site']['property']  = 'twitter:site';
-                $meta['twitter:site']['content']   = $config->twitterid;
-            };
-            if (isset($page->header()->twittercardoptions)) {
-                $meta['twitter:card']['name']      = 'twitter:card';
-                $meta['twitter:card']['property']  = 'twitter:card';
-                $meta['twitter:card']['content']   = $page->header()->twittercardoptions;
-            } else {
-                $meta['twitter:card']['name']      = 'twitter:card';
-                $meta['twitter:card']['property']  = 'twitter:card';
-                $meta['twitter:card']['content']   = 'summary_large_image';
-            };
-            
-            if (isset($page->header()->twittertitle)) {
-                $meta['twitter:title']['name']      = 'twitter:title';
-                $meta['twitter:title']['property']  = 'twitter:title';
-                $meta['twitter:title']['content']   = $page->header()->twittertitle;
-            } else {
-                $meta['twitter:title']['name']      = 'twitter:title';
-                $meta['twitter:title']['property']  = 'twitter:title';
-                $meta['twitter:title']['content']   = $page->title() . ' | ' . $this->config->get('site.title');
-            };
-            if (isset($page->header()->twitterdescription)) {
-                $meta['twitter:description']['name']      = 'twitter:description';
-                $meta['twitter:description']['property']  = 'twitter:description';
-                $meta['twitter:description']['content']   = $page->header()->twitterdescription;
-            } else {
-                $meta['twitter:description']['name']      = 'twitter:description';
-                $meta['twitter:description']['property']  = 'twitter:description';
-                $meta['twitter:description']['content']   =  $cleanedMarkdown;
-            };
-            if (isset($page->header()->twittershareimg)) {
-                $meta['twitter:image']['name']      = 'twitter:image';
-                $meta['twitter:image']['property']  = 'twitter:image';
-                $twittershareimg = $page->header()->twittershareimg;
-                $imagedata = $this->seoGetimage($twittershareimg);
-                $meta['twitter:image']['content']   = $this->grav['uri']->base() . $imagedata['url'];
-            } elseif(!empty($page->media()->images())) {
-                
-                $meta['twitter:image']['name']      = 'twitter:image';
-                $meta['twitter:image']['property']  = 'twitter:image';
-                $imgobject = $page->media()->images();
-                $getfirst = array_shift($imgobject);
-                $firstimage = $getfirst->url();
-                //$imagedata = $this->seoGetimage($firstimage);
-                $meta['twitter:image']['content']   = $this->grav['uri']->base() . $firstimage;
-            };
-            $meta['twitter:url']['name']      = 'twitter:url';
-            $meta['twitter:url']['property']  = 'twitter:url';
-            $meta['twitter:url']['content']   = $page->url(true);
-        }
-        }
-         if (property_exists($page->header(),'facebookenable')){
-         if ($page->header()->facebookenable == 'true') {
-         
-                //$meta['og:sitename']['name']        = 'og:sitename';
-                $meta['og:site_name']['property']    = 'og:site_name';
-                $meta['og:site_name']['content']     = $this->config->get('site.title');
-            if (isset($page->header()->facebooktitle)) {
-                //$meta['og:title']['name']           = 'og:title';
-                $meta['og:title']['property']       = 'og:title';
-                $meta['og:title']['content']        = $page->header()->facebooktitle;
-            } else {
-               // $meta['og:title']['name']           = 'og:title';
-                $meta['og:title']['property']       = 'og:title';
-                $meta['og:title']['content']        = $page->title();
-            }
-            if (isset($config['facebookid'])) {
-                //$meta['twitter:site']['name']      = 'twitter:site';
-                $meta['fb:app_id']['property']  = 'fb:app_id';
-                $meta['fb:app_id']['content']   = $config->facebookid;
-            };
-                //$meta['og:type']['name']            = 'og:type';
-                $meta['og:type']['property']        = 'og:type';
-                $meta['og:type']['content']         = 'article';
-               // $meta['og:url']['name']             = 'og:url';
-                $meta['og:url']['property']         = 'og:url';
-                $meta['og:url']['content']          = $this->grav['page']->canonical(true);
-            if (isset($page->header()->facebookdesc)) {
-                //$meta['og:description']['name']     = 'og:description';
-                $meta['og:description']['property'] = 'og:description';
-                $meta['og:description']['content'] =  substr($this->cleanMarkdown($page->header()->facebookdesc),0,320);
-            } else {
-               // $meta['og:description']['name']     = 'og:description';
-                $meta['og:description']['property'] = 'og:description';
-                $meta['og:description']['content'] =  $cleanedMarkdown;
-            }
-            if (isset($page->header()->facebookauthor)) {
-              //  $meta['article:author']['name']     = 'article:author';
-                $meta['article:author']['property'] = 'article:author';
-                $meta['article:author']['content'] =   $page->header()->facebookauthor;
-            }
-            if (isset($page->header()->facebookimg)) {
-               // $meta['og:image']['name']     = 'og:image';
-                $meta['og:image']['property'] = 'og:image';
-                $facebookimg = $page->header()->facebookimg;
-                $imagedata = $this->seoGetimage($facebookimg);
-                $meta['og:image']['content'] =  $this->grav['uri']->base() . $imagedata['url'];
-            } elseif(!empty($page->media()->images())) {
-                $meta['og:image']['property'] = 'og:image';
-                $imgobject = $page->media()->images();
-                $getfirst = array_shift($imgobject);
-                $firstimage = $getfirst->url();
-                //$imagedata = $this->seoGetimage($firstimage);
-                $meta['og:image']['content'] =  $this->grav['uri']->base() . $firstimage;
-            }
-       
-         }
-             
-         }
-        // Add metadata
-      $page->metadata($meta);
+        $meta = $this->applyGoogleMeta($page, $meta, $cleanedMarkdown);
+        $meta = $this->applyTwitterMeta($page, $meta, $cleanedMarkdown, $config);
+        $meta = $this->applyOpenGraphMeta($page, $meta, $cleanedMarkdown, $config);
+        $page->metadata($meta);
         // Set Json-Ld Microdata
         // Article Microdata
      if (property_exists($page->header(), 'musiceventenabled')) {
@@ -878,6 +741,85 @@ private function seoGetImage(?string $imageUrl): array
         
     }
 
+
+    private function applyGoogleMeta(Page $page, array $meta, string $cleanedMarkdown): array
+    {
+        if (isset($page->header()->googletitle)) {
+            $page->header()->displaytitle = $page->header()->title;
+            $page->header()->title = $page->header()->googletitle;
+        }
+        $meta['description']['name']    = 'description';
+        $meta['description']['content'] = $page->header()->googledesc ?? $cleanedMarkdown;
+        return $meta;
+    }
+
+    private function applyTwitterMeta(Page $page, array $meta, string $cleanedMarkdown, $config): array
+    {
+        if (!property_exists($page->header(), 'twitterenable') || $page->header()->twitterenable != 'true') {
+            return $meta;
+        }
+        if (isset($config['twitterid'])) {
+            $meta['twitter:site'] = ['name' => 'twitter:site', 'property' => 'twitter:site', 'content' => $config->twitterid];
+        }
+        $meta['twitter:card'] = [
+            'name' => 'twitter:card', 'property' => 'twitter:card',
+            'content' => $page->header()->twittercardoptions ?? 'summary_large_image',
+        ];
+        $meta['twitter:title'] = [
+            'name' => 'twitter:title', 'property' => 'twitter:title',
+            'content' => $page->header()->twittertitle ?? ($page->title() . ' | ' . $this->config->get('site.title')),
+        ];
+        $meta['twitter:description'] = [
+            'name' => 'twitter:description', 'property' => 'twitter:description',
+            'content' => $page->header()->twitterdescription ?? $cleanedMarkdown,
+        ];
+        if (isset($page->header()->twittershareimg)) {
+            $imagedata = $this->seoGetimage($page->header()->twittershareimg);
+            $meta['twitter:image'] = [
+                'name' => 'twitter:image', 'property' => 'twitter:image',
+                'content' => $this->grav['uri']->base() . $imagedata['url'],
+            ];
+        } elseif (!empty($page->media()->images())) {
+            $images = $page->media()->images();
+            $first  = array_shift($images);
+            $meta['twitter:image'] = [
+                'name' => 'twitter:image', 'property' => 'twitter:image',
+                'content' => $this->grav['uri']->base() . $first->url(),
+            ];
+        }
+        $meta['twitter:url'] = ['name' => 'twitter:url', 'property' => 'twitter:url', 'content' => $page->url(true)];
+        return $meta;
+    }
+
+    private function applyOpenGraphMeta(Page $page, array $meta, string $cleanedMarkdown, $config): array
+    {
+        if (!property_exists($page->header(), 'facebookenable') || $page->header()->facebookenable != 'true') {
+            return $meta;
+        }
+        $meta['og:site_name'] = ['property' => 'og:site_name', 'content' => $this->config->get('site.title')];
+        $meta['og:title']     = ['property' => 'og:title', 'content' => $page->header()->facebooktitle ?? $page->title()];
+        if (isset($config['facebookid'])) {
+            $meta['fb:app_id'] = ['property' => 'fb:app_id', 'content' => $config->facebookid];
+        }
+        $meta['og:type'] = ['property' => 'og:type', 'content' => 'article'];
+        $meta['og:url']  = ['property' => 'og:url',  'content' => $this->grav['page']->canonical(true)];
+        $fbdesc = isset($page->header()->facebookdesc)
+            ? substr($this->cleanMarkdown($page->header()->facebookdesc), 0, 320)
+            : $cleanedMarkdown;
+        $meta['og:description'] = ['property' => 'og:description', 'content' => $fbdesc];
+        if (isset($page->header()->facebookauthor)) {
+            $meta['article:author'] = ['property' => 'article:author', 'content' => $page->header()->facebookauthor];
+        }
+        if (isset($page->header()->facebookimg)) {
+            $imagedata = $this->seoGetimage($page->header()->facebookimg);
+            $meta['og:image'] = ['property' => 'og:image', 'content' => $this->grav['uri']->base() . $imagedata['url']];
+        } elseif (!empty($page->media()->images())) {
+            $images = $page->media()->images();
+            $first  = array_shift($images);
+            $meta['og:image'] = ['property' => 'og:image', 'content' => $this->grav['uri']->base() . $first->url()];
+        }
+        return $meta;
+    }
 
     public function onOutputGenerated()
     {
