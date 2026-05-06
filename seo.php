@@ -75,132 +75,89 @@ class SeoPlugin extends Plugin
     return $array;
 }
   
-/**
- * Récupère les métadonnées d'une image (dimensions et URL)
- * 
- * @param string|null $imageUrl URL de l'image à analyser
- * @return array{width: string, height: string, url: string}
- */
-private function seoGetImage(?string $imageUrl): array
-{
-    // Si l'URL est vide, retourner directement les valeurs par défaut
-    if (empty($imageUrl)) {
-        return [
-            'width' => '0',
-            'height' => '0',
-            'url' => '',
-        ];
+    private function seoGetImage(?string $imageUrl): array
+    {
+        if (empty($imageUrl)) {
+            return ['width' => '0', 'height' => '0', 'url' => ''];
+        }
+
+        try {
+            if (!preg_match('~((\/[^\/]+)+)\/([^\/]+)~', $imageUrl, $matches)) {
+                throw new \RuntimeException('Invalid image URL format');
+            }
+
+            $imagePath = $matches[1];
+            $imageName = $matches[3];
+
+            $page = $this->grav['page']->find($imagePath);
+            if (!$page) {
+                throw new \RuntimeException("Page not found: $imagePath");
+            }
+
+            $images = $page->media()->images();
+            if (empty($images)) {
+                throw new \RuntimeException('No images found on page');
+            }
+
+            $availableImages = array_keys($images);
+            $imageIndex      = array_search($imageName, $availableImages);
+            if ($imageIndex === false) {
+                throw new \RuntimeException('Specific image not found');
+            }
+
+            $image = $images[$availableImages[$imageIndex]];
+
+            if (!$image || !$image->path() || !file_exists($image->path())) {
+                throw new \RuntimeException('Image file invalid or inaccessible');
+            }
+
+            $dimensions = @getimagesize($image->path());
+            if ($dimensions === false) {
+                throw new \RuntimeException('Could not read image dimensions');
+            }
+
+            return ['width' => (string)$dimensions[0], 'height' => (string)$dimensions[1], 'url' => $image->url()];
+
+        } catch (\Exception $e) {
+            $this->grav['log']->debug('SEO Plugin - Image Warning: ' . $e->getMessage());
+            return ['width' => '0', 'height' => '0', 'url' => ''];
+        }
     }
 
-    try {
-        // Extraction du chemin et du nom de fichier
-        if (!preg_match('~((\/[^\/]+)+)\/([^\/]+)~', $imageUrl, $matches)) {
-            throw new \RuntimeException('Format d\'URL invalide');
-        }
-
-        $imagePath = $matches[1];
-        $imageName = $matches[3];
-
-        // Récupération de la page
-        $page = $this->grav['page']->find($imagePath);
-        if (!$page) {
-            throw new \RuntimeException("Page non trouvée: $imagePath");
-        }
-
-        // Vérification de la présence d'images
-        $images = $page->media()->images();
-        if (empty($images)) {
-            throw new \RuntimeException("Aucune image trouvée");
-        }
-
-        // Recherche de l'image spécifique
-        $availableImages = array_keys($images);
-        $imageIndex = array_search($imageName, $availableImages);
-        if ($imageIndex === false) {
-            throw new \RuntimeException("Image spécifique non trouvée");
-        }
-
-        $imageKey = $availableImages[$imageIndex];
-        $image = $images[$imageKey];
-        
-        // Vérification du chemin de l'image
-        if (!$image || !$image->path() || !file_exists($image->path())) {
-            throw new \RuntimeException("Fichier image invalide ou inaccessible");
-        }
-
-        $dimensions = @getimagesize($image->path());
-        if ($dimensions === false) {
-            throw new \RuntimeException("Impossible de lire les dimensions de l'image");
-        }
-
-        return [
-            'width' => (string)$dimensions[0],
-            'height' => (string)$dimensions[1],
-            'url' => $image->url(),
-        ];
-
-    } catch (\Exception $e) {
-        // Log l'erreur mais ne casse pas le site
-        $this->grav['log']->debug('SEO Plugin - Image Warning: ' . $e->getMessage());
-        
-        return [
-            'width' => '0',
-            'height' => '0',
-            'url' => '',
-        ];
-    }
-}
-    /**
- * Nettoie et convertit le texte Markdown en texte brut
- * 
- * @param string $text Le texte Markdown à nettoyer
- * @param int $maxLength Longueur maximale du texte retourné (défaut: 320)
- * @return string Le texte nettoyé
- */
     private const MARKDOWN_RULES = [
-        // Suppression des inclusions Twig
-        '/{%[\s\S]*?%}[\s\S]*?/' => '',
-        
-        // Suppression des balises HTML spécifiques
-        '/<style[^>]*?>.*?<\/style>/si' => '',
-        '/<script[^>]*?>.*?<\/script>/si' => '',
-        
-        // Conversion de la syntaxe Markdown
-        '/^#+\s*(.*)$/m' => '$1',                  // Titres
-        '/^[*\-_]{3,}$/m' => '',                   // Lignes horizontales
-        '/!\[([^\]]*)\]\([^)]+\)/' => '',          // Images
-        '/\[([^\]]+)\]\([^)]+\)/' => '$1',         // Liens
-        '/[*_]{2}(.*?)[*_]{2}/' => '$1',           // Gras
-        '/[*_](.*?)[*_]/' => '$1',                 // Italique
-        '/~~(.*?)~~/' => '$1',                     // Barré
-        '/:`(.*?)`/' => '$1',                      // Code inline
-        '/^```[\s\S]*?```$/m' => '',               // Blocs de code
-        '/^[*\-+]\s+(.*)$/m' => '$1',              // Listes non ordonnées
-        '/^\d+\.\s+(.*)$/m' => '$1',               // Listes ordonnées
-        '/^>\s*(.*)$/m' => '$1',                   // Citations
-        '/<!--[\s\S]*?-->/' => '',                 // Commentaires HTML
+        '/{%[\s\S]*?%}[\s\S]*?/'           => '',   // Twig includes
+        '/<style[^>]*?>.*?<\/style>/si'     => '',   // style blocks
+        '/<script[^>]*?>.*?<\/script>/si'   => '',   // script blocks
+        '/^#+\s*(.*)$/m'                    => '$1', // headings
+        '/^[*\-_]{3,}$/m'                  => '',   // horizontal rules
+        '/!\[([^\]]*)\]\([^)]+\)/'         => '',   // images
+        '/\[([^\]]+)\]\([^)]+\)/'          => '$1', // links
+        '/[*_]{2}(.*?)[*_]{2}/'            => '$1', // bold
+        '/[*_](.*?)[*_]/'                  => '$1', // italic
+        '/~~(.*?)~~/'                      => '$1', // strikethrough
+        '/:`(.*?)`/'                       => '$1', // inline code
+        '/^```[\s\S]*?```$/m'              => '',   // code blocks
+        '/^[*\-+]\s+(.*)$/m'              => '$1', // unordered lists
+        '/^\d+\.\s+(.*)$/m'               => '$1', // ordered lists
+        '/^>\s*(.*)$/m'                   => '$1', // blockquotes
+        '/<!--[\s\S]*?-->/'               => '',   // HTML comments
     ];
 
-    private function cleanMarkdown(string $text, int $maxLength = 320): string 
-{
+    private function cleanMarkdown(string $text, int $maxLength = 320): string
+    {
+        $text = strip_tags($text);
 
-    // Nettoyage initial
-    $text = strip_tags($text);
+        foreach (self::MARKDOWN_RULES as $pattern => $replacement) {
+            $text = preg_replace($pattern, $replacement, $text);
+        }
 
-    // Application des règles de nettoyage Markdown
-    foreach (self::MARKDOWN_RULES as $pattern => $replacement) {
-        $text = preg_replace($pattern, $replacement, $text);
+        $text = preg_replace('/\s+/', ' ', $text);
+        $text = str_replace(["\r", "\n"], ' ', $text);
+        $text = preg_replace('/\. \./', '.', $text);
+        $text = trim($text);
+
+        return mb_substr($text, 0, $maxLength);
     }
-
-    // Nettoyage final
-    $text = preg_replace('/\s+/', ' ', $text);           // Remplace les espaces multiples
-    $text = str_replace(["\r", "\n"], ' ', $text);       // Remplace les retours à la ligne
-    $text = preg_replace('/\. \./', '.', $text);         // Corrige la ponctuation
-    $text = trim($text);                                 // Supprime les espaces aux extrémités
-
-    // Retourne le texte tronqué à la longueur maximale
-    return mb_substr($text, 0, $maxLength);
-}
     
 
     /**
