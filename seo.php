@@ -463,10 +463,17 @@ class SeoPlugin extends Plugin
     private function buildOrganizationMicrodata(Page $page): array
     {
         $result = [];
-        if (!property_exists($page->header(), 'orgaenabled')) return $result;
-        if (!$page->header()->orgaenabled || !$this->config['plugins']['seo']['organization']) return $result;
+        $cfg    = $this->config['plugins']['seo'];
 
-        $orga            = $page->header()->orga ?? [];
+        $globalEnabled = !empty($cfg['organization_on_all_pages']);
+        $pageEnabled   = property_exists($page->header(), 'orgaenabled') && $page->header()->orgaenabled;
+
+        if (!$globalEnabled && !$pageEnabled) return $result;
+        if (!$cfg['organization']) return $result;
+
+        // Merge: global defaults, then page-level overrides on top
+        $globalOrga = $cfg['organization'] ?? [];
+        $orga       = array_merge($globalOrga, $page->header()->orga ?? []);
         $founderarray    = [];
         $similararray    = [];
         $areaservedarray = [];

@@ -54,6 +54,98 @@ form:
         1: PLUGIN_ADMIN.ENABLED
         0: PLUGIN_ADMIN.DISABLED
 
+    social_section:
+      type: section
+      title: Social Defaults
+      underline: true
+    default_social_image:
+      type: text
+      label: Default Social Image URL
+      help: Fallback og:image / twitter:image for pages with no image. Use a full URL (https://…).
+      placeholder: 'https://yoursite.com/user/images/og-default.jpg'
+
+    article_section:
+      type: section
+      title: Article Schema Defaults
+      underline: true
+    publisher_name:
+      type: text
+      label: Publisher Name
+      help: Used in Article JSON-LD when the page does not set publisher_name.
+    publisher_logo:
+      type: text
+      label: Publisher Logo URL (path)
+      help: Grav media path for the publisher logo, e.g. /user/images/logo.png
+      placeholder: '/user/images/logo.png'
+    default_author:
+      type: text
+      label: Default Author
+      help: Fallback author for Article schema. Resolved after header.article.author and header.author.
+
+    organization_global_section:
+      type: section
+      title: Global Organization
+      underline: true
+    organization_on_all_pages:
+      type: toggle
+      label: Emit Organization JSON-LD on every page
+      highlight: 1
+      default: 0
+      options:
+        1: PLUGIN_ADMIN.ENABLED
+        0: PLUGIN_ADMIN.DISABLED
+      validate:
+        type: bool
+    organization.name:
+      type: text
+      label: Organization Name
+    organization.legalname:
+      type: text
+      label: Registered Legal Name
+    organization.description:
+      type: text
+      label: Description
+    organization.url:
+      type: text
+      label: Website URL
+      placeholder: 'https://yoursite.com'
+    organization.logo:
+      type: text
+      label: Logo URL
+      placeholder: 'https://yoursite.com/logo.png'
+    organization.email:
+      type: email
+      label: Email
+    organization.phone:
+      type: text
+      label: Phone
+    organization.streetaddress:
+      type: text
+      label: Street Address
+    organization.city:
+      type: text
+      label: City
+    organization.state:
+      type: text
+      label: State / Region
+    organization.zipcode:
+      type: text
+      label: Postal Code
+    organization.taxid:
+      type: text
+      label: Tax / Fiscal ID
+    organization.vatid:
+      type: text
+      label: VAT ID
+    organization.foundingDate:
+      type: text
+      label: Founding Year
+      placeholder: '2010'
+    organization.paymentAccepted:
+      type: text
+      label: Payment Accepted
+      placeholder: 'Visa, Cash, Credit Card'
+
     microdata_section:
       type: section
       title: Microdata Settings
