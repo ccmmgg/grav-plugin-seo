@@ -244,206 +244,205 @@ private function seoGetImage(?string $imageUrl): array
         $meta = $this->applyTwitterMeta($page, $meta, $cleanedMarkdown, $config);
         $meta = $this->applyOpenGraphMeta($page, $meta, $cleanedMarkdown, $config);
         $page->metadata($meta);
-        // Set Json-Ld Microdata
-        // Article Microdata
-     if (property_exists($page->header(), 'musiceventenabled')) {
-    if ($page->header()->musiceventenabled && $this->config['plugins']['seo']['musicevent']) {
+        array_push($microdata, ...$this->buildMusicEventMicrodata($page));
+        array_push($microdata, ...$this->buildEventMicrodata($page));
+        array_push($microdata, ...$this->buildPersonMicrodata($page));
+        array_push($microdata, ...$this->buildOrganizationMicrodata($page));
+        array_push($microdata, ...$this->buildRestaurantMicrodata($page));
+        array_push($microdata, ...$this->buildProductMicrodata($page));
+
+        $articleMicrodata = $this->buildArticleMicrodata($page, $content);
+        if ($articleMicrodata) {
+            $microdata['article'] = $articleMicrodata;
+        }
+
+        $microdata = $this->cleanArray($microdata);
+
+        foreach ($microdata as $item) {
+            $outputjson .= PHP_EOL . '<script type="application/ld+json">' . PHP_EOL
+                . json_encode($item, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
+                . PHP_EOL . '</script>';
+        }
+
+        $customjson = $page->header()->add_json ?? null;
+        if (!empty($customjson)) {
+            foreach ($customjson as $json) {
+                $outputjson .= PHP_EOL . '<script type="application/ld+json">' . PHP_EOL
+                    . $json['custom_json']
+                    . PHP_EOL . '</script>';
+            }
+        }
+
+        $this->grav['twig']->twig_vars['json'] = $outputjson;
+        $this->grav['twig']->twig_vars['myvar'] = $outputjson;
+        $this->jsonLdOutput = $outputjson;
+    }
+
+    private function buildMusicEventMicrodata(Page $page): array
+    {
+        $result = [];
+        if (!property_exists($page->header(), 'musiceventenabled')) return $result;
+        if (!$page->header()->musiceventenabled || !$this->config['plugins']['seo']['musicevent']) return $result;
+
         $musiceventsarray = $page->header()->musicevents ?? [];
-        
-        // Vérifier que nous avons un array valide et non vide
-        if (is_array($musiceventsarray) && !empty($musiceventsarray)) {
-            foreach ($musiceventsarray as $event) {
-                $performerarray = [];  // Initialiser pour chaque événement
-                $workarray = [];       // Initialiser pour chaque événement
-                $musiceventimage = null;  // Initialiser pour chaque événement
+        if (!is_array($musiceventsarray) || empty($musiceventsarray)) return $result;
 
-                // Gestion des performers
-                if (!empty($event['musicevent_performer']) && is_array($event['musicevent_performer'])) {
-                    foreach ($event['musicevent_performer'] as $artist) {
-                        $performerarray[] = [
-                            '@type' => $artist['performer_type'] ?? 'PerformingGroup',
-                            'name' => $artist['name'] ?? '',
-                            'sameAs' => $artist['sameAs'] ?? '',
-                        ];
-                    }
-                }
+        foreach ($musiceventsarray as $event) {
+            $performerarray  = [];
+            $workarray       = [];
+            $musiceventimage = null;
 
-                // Gestion des œuvres interprétées
-                if (!empty($event['musicevent_workPerformed']) && is_array($event['musicevent_workPerformed'])) {
-                    foreach ($event['musicevent_workPerformed'] as $work) {
-                        $workarray[] = [
-                            'name' => $work['name'] ?? '',
-                            'sameAs' => $work['sameAs'] ?? '',
-                        ];
-                    }
+            if (!empty($event['musicevent_performer']) && is_array($event['musicevent_performer'])) {
+                foreach ($event['musicevent_performer'] as $artist) {
+                    $performerarray[] = [
+                        '@type' => $artist['performer_type'] ?? 'PerformingGroup',
+                        'name'  => $artist['name'] ?? '',
+                        'sameAs' => $artist['sameAs'] ?? '',
+                    ];
                 }
-
-                // Gestion de l'image
-                if (!empty($event['musicevent_image'])) {
-                    $imagedata = $this->seoGetImage($event['musicevent_image']);
-                    if (!empty($imagedata['url'])) {
-                        $musiceventimage = [
-                            '@type' => 'ImageObject',
-                            'width' => $imagedata['width'],
-                            'height' => $imagedata['height'],
-                            'url' => $this->grav['uri']->base() . $imagedata['url'],
-                        ];
-                    }
-                }
-
-                // Construction de l'événement
-                $eventData = [
-                    '@context' => 'https://schema.org',
-                    '@type' => 'MusicEvent',
-                    'name' => $event['musicevent_location_name'] ?? '',
-                    'location' => [
-                        '@type' => 'MusicVenue',
-                        'name' => $event['musicevent_location_name'] ?? '',
-                        'address' => $event['musicevent_location_address'] ?? '',
-                    ],
-                    'description' => $event['musicevent_description'] ?? '',
-                    'url' => $event['musicevent_url'] ?? '',
-                    'offers' => [
-                        '@type' => 'Offer',
-                        'price' => $event['musicevent_offers_price'] ?? '',
-                        'priceCurrency' => $event['musicevent_offers_priceCurrency'] ?? '',
-                        'url' => $event['musicevent_offers_url'] ?? '',
-                    ],
-                ];
-
-                // Ajouter les champs optionnels seulement s'ils existent
-                if (!empty($performerarray)) {
-                    $eventData['performer'] = $performerarray;
-                }
-                if (!empty($workarray)) {
-                    $eventData['workPerformed'] = $workarray;
-                }
-                if ($musiceventimage) {
-                    $eventData['image'] = $musiceventimage;
-                }
-
-                // Gestion des dates
-                if (!empty($event['musicevent_startdate'])) {
-                    $eventData['startDate'] = date("c", strtotime($event['musicevent_startdate']));
-                }
-                if (!empty($event['musicevent_enddate'])) {
-                    $eventData['endDate'] = date("c", strtotime($event['musicevent_enddate']));
-                }
-
-                $microdata[] = $eventData;
             }
+            if (!empty($event['musicevent_workPerformed']) && is_array($event['musicevent_workPerformed'])) {
+                foreach ($event['musicevent_workPerformed'] as $work) {
+                    $workarray[] = ['name' => $work['name'] ?? '', 'sameAs' => $work['sameAs'] ?? ''];
+                }
+            }
+            if (!empty($event['musicevent_image'])) {
+                $imagedata = $this->seoGetImage($event['musicevent_image']);
+                if (!empty($imagedata['url'])) {
+                    $musiceventimage = [
+                        '@type'  => 'ImageObject',
+                        'width'  => $imagedata['width'],
+                        'height' => $imagedata['height'],
+                        'url'    => $this->grav['uri']->base() . $imagedata['url'],
+                    ];
+                }
+            }
+
+            $eventData = [
+                '@context'    => 'https://schema.org',
+                '@type'       => 'MusicEvent',
+                'name'        => $event['musicevent_location_name'] ?? '',
+                'location'    => [
+                    '@type'   => 'MusicVenue',
+                    'name'    => $event['musicevent_location_name'] ?? '',
+                    'address' => $event['musicevent_location_address'] ?? '',
+                ],
+                'description' => $event['musicevent_description'] ?? '',
+                'url'         => $event['musicevent_url'] ?? '',
+                'offers'      => [
+                    '@type'        => 'Offer',
+                    'price'        => $event['musicevent_offers_price'] ?? '',
+                    'priceCurrency' => $event['musicevent_offers_priceCurrency'] ?? '',
+                    'url'          => $event['musicevent_offers_url'] ?? '',
+                ],
+            ];
+
+            if (!empty($performerarray))  $eventData['performer']    = $performerarray;
+            if (!empty($workarray))       $eventData['workPerformed'] = $workarray;
+            if ($musiceventimage)         $eventData['image']        = $musiceventimage;
+            if (!empty($event['musicevent_startdate'])) {
+                $eventData['startDate'] = date("c", strtotime($event['musicevent_startdate']));
+            }
+            if (!empty($event['musicevent_enddate'])) {
+                $eventData['endDate'] = date("c", strtotime($event['musicevent_enddate']));
+            }
+
+            $result[] = $eventData;
         }
+
+        return $result;
     }
-}
-       if (property_exists($page->header(), 'eventenabled')) {
-    if ($page->header()->eventenabled && $this->config['plugins']['seo']['event']) {
+
+    private function buildEventMicrodata(Page $page): array
+    {
+        $result = [];
+        if (!property_exists($page->header(), 'eventenabled')) return $result;
+        if (!$page->header()->eventenabled || !$this->config['plugins']['seo']['event']) return $result;
+
         $eventsarray = $page->header()->addevent ?? [];
-        
-        // Vérifier que nous avons un array valide et non vide
-        if (is_array($eventsarray) && !empty($eventsarray)) {
-            foreach ($eventsarray as $event) {
-                // Préparer l'adresse seulement si les données nécessaires existent
-                $address = [
-                    '@type' => 'PostalAddress',
-                ];
-                
-                // Ajouter les champs d'adresse seulement s'ils existent
-                if (!empty($event['event_location_address_addressLocality'])) {
-                    $address['addressLocality'] = $event['event_location_address_addressLocality'];
-                }
-                if (!empty($event['event_location_address_addressRegion'])) {
-                    $address['addressRegion'] = $event['event_location_address_addressRegion'];
-                }
-                if (!empty($event['event_location_streetAddress'])) {
-                    $address['streetAddress'] = $event['event_location_streetAddress'];
-                }
+        if (!is_array($eventsarray) || empty($eventsarray)) return $result;
 
-                // Préparer l'offre seulement si les données nécessaires existent
-                $offers = [
-                    '@type' => 'Offer',
-                ];
-                if (!empty($event['event_offers_price'])) {
-                    $offers['price'] = $event['event_offers_price'];
-                }
-                if (!empty($event['event_offers_currency'])) {
-                    $offers['priceCurrency'] = $event['event_offers_currency'];
-                }
-                if (!empty($event['event_offers_url'])) {
-                    $offers['url'] = $event['event_offers_url'];
-                }
-
-                // Construction de l'événement de base
-                $eventData = [
-                    '@context' => 'https://schema.org',
-                    '@type' => 'Event',
-                    'name' => $event['event_name'] ?? '',
-                    'location' => [
-                        '@type' => 'Place',
-                        'name' => $event['event_location_name'] ?? '',
-                        'address' => $address,
-                    ],
-                ];
-
-                // Ajouter l'URL de la location si elle existe
-                if (!empty($event['musicevent_location_url'])) {
-                    $eventData['location']['url'] = $event['musicevent_location_url'];
-                }
-
-                // Ajouter la description si elle existe
-                if (!empty($event['event_description'])) {
-                    $eventData['description'] = $event['event_description'];
-                }
-
-                // Ajouter les offres si elles ne sont pas vides
-                if (count(array_filter($offers)) > 1) { // > 1 car @type est toujours présent
-                    $eventData['offers'] = $offers;
-                }
-
-                // Gestion des dates
-                if (!empty($event['event_startDate'])) {
-                    $startDate = strtotime($event['event_startDate']);
-                    if ($startDate) {
-                        $eventData['startDate'] = date("c", $startDate);
-                    }
-                }
-                if (!empty($event['event_endDate'])) {
-                    $endDate = strtotime($event['event_endDate']);
-                    if ($endDate) {
-                        $eventData['endDate'] = date("c", $endDate);
-                    }
-                }
-
-                $microdata[] = array_filter($eventData, function($value) {
-                    return $value !== null && $value !== '';
-                });
+        foreach ($eventsarray as $event) {
+            $address = ['@type' => 'PostalAddress'];
+            if (!empty($event['event_location_address_addressLocality'])) {
+                $address['addressLocality'] = $event['event_location_address_addressLocality'];
             }
+            if (!empty($event['event_location_address_addressRegion'])) {
+                $address['addressRegion'] = $event['event_location_address_addressRegion'];
+            }
+            if (!empty($event['event_location_streetAddress'])) {
+                $address['streetAddress'] = $event['event_location_streetAddress'];
+            }
+
+            $offers = ['@type' => 'Offer'];
+            if (!empty($event['event_offers_price']))    $offers['price']         = $event['event_offers_price'];
+            if (!empty($event['event_offers_currency'])) $offers['priceCurrency'] = $event['event_offers_currency'];
+            if (!empty($event['event_offers_url']))      $offers['url']           = $event['event_offers_url'];
+
+            $eventData = [
+                '@context' => 'https://schema.org',
+                '@type'    => 'Event',
+                'name'     => $event['event_name'] ?? '',
+                'location' => ['@type' => 'Place', 'name' => $event['event_location_name'] ?? '', 'address' => $address],
+            ];
+
+            if (!empty($event['musicevent_location_url'])) {
+                $eventData['location']['url'] = $event['musicevent_location_url'];
+            }
+            if (!empty($event['event_description'])) {
+                $eventData['description'] = $event['event_description'];
+            }
+            if (count(array_filter($offers)) > 1) {
+                $eventData['offers'] = $offers;
+            }
+            if (!empty($event['event_startDate'])) {
+                $ts = strtotime($event['event_startDate']);
+                if ($ts) $eventData['startDate'] = date("c", $ts);
+            }
+            if (!empty($event['event_endDate'])) {
+                $ts = strtotime($event['event_endDate']);
+                if ($ts) $eventData['endDate'] = date("c", $ts);
+            }
+
+            $result[] = array_filter($eventData, fn($v) => $v !== null && $v !== '');
         }
+
+        return $result;
     }
-}
-     if (property_exists($page->header(), 'personenabled')) {
-    if ($page->header()->personenabled && $this->config['plugins']['seo']['person']) {
+
+    private function buildPersonMicrodata(Page $page): array
+    {
+        $result = [];
+        if (!property_exists($page->header(), 'personenabled')) return $result;
+        if (!$page->header()->personenabled || !$this->config['plugins']['seo']['person']) return $result;
+
         $personarray = $page->header()->addperson ?? [];
-        
-        // Vérification que $personarray est un array et n'est pas vide
-        if (is_array($personarray) && !empty($personarray)) {
-            foreach ($personarray as $person) {
-                $microdata[] = [
-                    '@context' => 'https://schema.org',
-                    '@type' => 'Person',
-                    'name' => $person['person_name'] ?? null,
-                    'address' => [
-                        '@type' => 'PostalAddress',
-                        'addressLocality' => $person['person_address_addressLocality'] ?? null,
-                        'addressRegion' => $person['person_address_addressRegion'] ?? null,
-                    ],
-                    'jobTitle' => $person['person_jobTitle'] ?? null,
-                ];
-            }
+        if (!is_array($personarray) || empty($personarray)) return $result;
+
+        foreach ($personarray as $person) {
+            $result[] = [
+                '@context' => 'https://schema.org',
+                '@type'    => 'Person',
+                'name'     => $person['person_name'] ?? null,
+                'address'  => [
+                    '@type'           => 'PostalAddress',
+                    'addressLocality' => $person['person_address_addressLocality'] ?? null,
+                    'addressRegion'   => $person['person_address_addressRegion'] ?? null,
+                ],
+                'jobTitle' => $person['person_jobTitle'] ?? null,
+            ];
         }
+
+        return $result;
     }
-}
-        if (property_exists($page->header(),'orgaenabled')){
-       if ($page->header()->orgaenabled and $this->config['plugins']['seo']['organization']) {
+
+    private function buildOrganizationMicrodata(Page $page): array
+    {
+        $result = [];
+        if (!property_exists($page->header(), 'orgaenabled')) return $result;
+        if (!$page->header()->orgaenabled || !$this->config['plugins']['seo']['organization']) return $result;
+
+        $orga            = $page->header()->orga ?? [];
         $founderarray    = [];
         $similararray    = [];
         $areaservedarray = [];
@@ -451,268 +450,212 @@ private function seoGetImage(?string $imageUrl): array
         $offerarray      = [];
         $orgarating      = null;
 
-        if (isset($page->header()->orga['founders'])){
-        foreach ($page->header()->orga['founders'] as $founder){
-                  $founderarray[] = [
-                      '@type' => 'Person',
-                      'name' => $founder['name'] ?? null,
+        foreach ($orga['founders'] ?? [] as $founder) {
+            $founderarray[] = ['@type' => 'Person', 'name' => $founder['name'] ?? null];
+        }
+        foreach ($orga['similar'] ?? [] as $similar) {
+            $similararray[] = $similar['sameas'];
+        }
+        foreach ($orga['areaserved'] ?? [] as $areaserved) {
+            $areaservedarray[] = $areaserved['area'];
+        }
+        foreach ($orga['openingHours'] ?? [] as $hours) {
+            $openingHours[] = $hours['entry'];
+        }
+        foreach ($orga['offercatalog'] ?? [] as $offer) {
+            if (array_key_exists('offereditem', $offer)) {
+                foreach ($offer['offereditem'] as $service) {
+                    $offerarray[] = [
+                        '@type'           => 'OfferCatalog',
+                        'name'            => $offer['offer'] ?? null,
+                        'description'     => $offer['description'] ?? null,
+                        'url'             => $offer['url'] ?? null,
+                        'image'           => $offer['image'] ?? null,
+                        'itemListElement' => [
+                            '@type'       => 'Offer',
+                            'itemOffered' => ['@type' => 'Service', 'name' => $service['name'] ?? null, 'url' => $service['url'] ?? null],
+                        ],
                     ];
-                 }
-        }
-        if (isset($page->header()->orga['similar'])){
-            foreach ($page->header()->orga['similar'] as $similar){
-                      $similararray[] = $similar['sameas'];
-                     }
-        }
-        if (isset($page->header()->orga['areaserved'])){
-            foreach ($page->header()->orga['areaserved'] as $areaserved){
-                      $areaservedarray[] = $areaserved['area'];
-                     }
-        }
-        if (isset($page->header()->orga['openingHours'])){
-            foreach ($page->header()->orga['openingHours'] as $hours){
-                      $openingHours[] = $hours['entry'];
-                     }
-        }
-        if (isset($page->header()->orga['offercatalog'])){
-            foreach ($page->header()->orga['offercatalog'] as $offer) {
-                if (array_key_exists('offereditem', $offer)) {
-                    foreach ($offer['offereditem'] as $service) {
-                        $offerarray[] = [
-                            '@type' => 'OfferCatalog',
-                            'name' => $offer['offer'] ?? null,
-                            'description' => $offer['description'] ?? null,
-                            'url' => $offer['url'] ?? null,
-                            'image' => $offer['image'] ?? null,
-                            'itemListElement' => [
-                                '@type' => 'Offer',
-                                'itemOffered' => [
-                                    '@type' => 'Service',
-                                    'name' => $service['name'] ?? null,
-                                    'url' => $service['url'] ?? null,
-                                ],
-                            ],
-                        ];
-                    }
-                } else {
-                        $offerarray[] = [
-                            '@type' => 'OfferCatalog',
-                            'name' => $offer['offer'] ?? null,
-                            'description' => $offer['description'] ?? null,
-                            'url' => $offer['url'] ?? null,
-                            'image' => $offer['image'] ?? null,
-                        ];
                 }
-            }
-        }
-
-        if (property_exists($page->header(),'orgaratingenabled')){
-
-        if ($page->header()->orgaratingenabled){
-        $orgarating = [
-                      '@type' => 'AggregateRating',
-                      'ratingValue' => $page->header()->orga['ratingValue'] ?? null,
-                      'reviewCount' => $page->header()->orga['reviewCount'] ?? null,
-                      ];
-        }
-
-        }
-        $orga = $page->header()->orga ?? [];
-        $microdata[] = [
-                  '@context' => 'https://schema.org',
-                  '@type' => 'Organization',
-                  'name' => $orga['name'] ?? null,
-                  'legalname' => $orga['legalname'] ?? null,
-                  'taxid' => $orga['taxid'] ?? null,
-                  'vatid' => $orga['vatid'] ?? null,
-                  'areaServed' => $areaservedarray ?: null,
-                  'description' => $orga['description'] ?? null,
-
-                  'address' => [
-                      '@type' => 'PostalAddress',
-                      'streetAddress' => $orga['streetaddress'] ?? null,
-                      'addressLocality' => $orga['city'] ?? null,
-                      'addressRegion' => $orga['state'] ?? null,
-                      'postalCode' => $orga['zipcode'] ?? null,
-                      ],
-                  'telephone' => $orga['phone'] ?? null,
-                  'logo' => $orga['logo'] ?? null,
-                  'url' => $orga['url'] ?? null,
-                  'openingHours' => $openingHours ?: null,
-                  'email' => $orga['email'] ?? null,
-                  'foundingDate' => $orga['foundingDate'] ?? null,
-                  'aggregateRating' => $orgarating,
-                  'paymentAccepted' => $orga['paymentAccepted'] ?? null,
-                  'founders' => $founderarray ?: null,
-                  'sameAs' => $similararray ?: null,
-                  'hasOfferCatalog' => $offerarray ?: null,
-                  ];
-
-
-
-       }
-       }
-        if (property_exists($page->header(),'restaurantenabled')){
-        if ($page->header()->restaurantenabled and $this->config['plugins']['seo']['restaurant']) {
-         $restaurantimage = null;
-         $restaurant = $page->header()->restaurant ?? [];
-         if (isset($restaurant['image'])){
-            $imagedata = $this->seoGetimage($restaurant['image']);
-            $restaurantimage = [
-                      '@type' => 'ImageObject',
-                      'width' => $imagedata['width'],
-                      'height' => $imagedata['height'],
-                      'url' => $this->grav['uri']->base() . $imagedata['url'],
-                      ];
-            }
-              $microdata[] = [
-                  '@context' => 'https://schema.org',
-                  '@type' => 'Restaurant',
-                  'name' => $restaurant['name'] ?? null,
-                  'address' => [
-                      '@type' => 'PostalAddress',
-                      'addressLocality' => $restaurant['address_addressLocality'] ?? null,
-                      'addressRegion' => $restaurant['address_addressRegion'] ?? null,
-                      'streetAddress' => $restaurant['address_streetAddress'] ?? null,
-                      'postalCode' => $restaurant['address_postalCode'] ?? null,
-                      ],
-                  'areaServed' => $areaservedarray ?? null,
-                  'servesCuisine' => $restaurant['servesCuisine'] ?? null,
-                  'priceRange' => $restaurant['priceRange'] ?? null,
-                  'image' => $restaurantimage,
-                  'telephone' => $restaurant['telephone'] ?? null,
-                  ];
-
-       }
-        }
-    if (property_exists($page->header(),'productenabled')){
-        if ($page->header()->productenabled and $this->config['plugins']['seo']['product']) {
-         $product = $page->header()->product ?? [];
-         $productimage = [];
-         $offer = [];
-
-         if (isset($product['image'])){
-             foreach ($product['image'] as $imagearray){
-                 foreach ($imagearray as $imagepath){
-                     $imagedata = $this->seoGetimage($imagepath);
-                     $productimage[] = $this->grav['uri']->base() . $imagedata['url'];
-                 }
-             }
-         }
-         if (isset($product['addoffer'])){
-             foreach ($product['addoffer'] as $key => $offerdata){
-                 $offer[$key] = [
-                      '@type' => 'Offer',
-                      'priceCurrency' => $offerdata['offer_priceCurrency'] ?? null,
-                      'price' => $offerdata['offer_price'] ?? null,
-                      'validFrom' => $offerdata['offer_validFrom'] ?? null,
-                      'priceValidUntil' => $offerdata['offer_validUntil'] ?? null,
-                      'availability' => $offerdata['offer_availability'] ?? null,
-                     ];
-             }
-         }
-
-              $microdata[] = [
-                  '@context' => 'https://schema.org',
-                  '@type' => 'Product',
-                  'name' => $product['name'] ?? null,
-                  'category' => $product['category'] ?? null,
-                  'brand' => [
-                      '@type' => 'Thing',
-                      'name' => $product['brand'] ?? null,
-                      ],
-                  'offers' => $offer ?: null,
-                  'description' => $product['description'] ?? null,
-                  'image' => $productimage ?: null,
-                  'aggregateRating' => [
-                      '@type' => 'AggregateRating',
-                      'ratingValue' => $product['ratingValue'] ?? null,
-                      'reviewCount' => $product['reviewCount'] ?? null,
-                      ]
-                  ];
-       }
-        }
-     if (property_exists($page->header(),'articleenabled')){
-            if (isset($page->header()->article['headline'])){
-               $headline =  $page->header()->article['headline'];
             } else {
-                $headline = $page->title();
+                $offerarray[] = [
+                    '@type'       => 'OfferCatalog',
+                    'name'        => $offer['offer'] ?? null,
+                    'description' => $offer['description'] ?? null,
+                    'url'         => $offer['url'] ?? null,
+                    'image'       => $offer['image'] ?? null,
+                ];
             }
-       if ($page->header()->articleenabled and $this->config['plugins']['seo']['article']) {
-        $microdata['article'] = [
-    '@context' => 'https://schema.org',
-    '@type' => 'Article',
-    'headline' => $headline,
-    'mainEntityOfPage' => [
-        "@type" => "WebPage",
-        'url' => $this->grav['uri']->base(),
-    ],
-    'articleBody' => $this->cleanMarkdown($content),
-    'datePublished' => date("c", strtotime($page->header()->article['datePublished'] ?? '') ?: $page->date()),
-    'dateModified' => date("c", strtotime($page->header()->article['dateModified'] ?? '') ?: $page->date()),
-];
-        if (isset($page->header()->article['description'])) {
-            $microdata['article']['description'] = $page->header()->article['description'];
-           }
-           else {
-             $microdata['article']['description'] = substr($content,0,140); 
-           };
-
-         if (isset($page->header()->article['author'])) {
-            $microdata['article']['author'] = $page->header()->article['author'];
-           };
-           if (isset($page->header()->article['publisher_name'])) {
-            $microdata['article']['publisher']['@type'] = 'Organization';
-            $microdata['article']['publisher']['name'] = $page->header()->article['publisher_name'];
-           };
-           if (isset($page->header()->article['publisher_logo_url'])) {
-            $publisherlogourl = $page->header()->article['publisher_logo_url'];
-            $imagedata = $this->seoGetimage($publisherlogourl);
-            $microdata['article']['publisher']['logo']['@type'] = 'ImageObject';
-            $microdata['article']['publisher']['logo']['url'] = $this->grav['uri']->base() . $imagedata['url'];
-            $microdata['article']['publisher']['logo']['width'] =  $imagedata['width'];
-            $microdata['article']['publisher']['logo']['height'] =  $imagedata['height'];
-            
-           };
-           if (isset($page->header()->article['image_url'])) {
-            $microdata['article']['image']['@type'] = 'ImageObject';
-            $imageurl = $page->header()->article['image_url'];
-            $imagedata = $this->seoGetimage($imageurl);
-            $microdata['article']['image']['url'] = $this->grav['uri']->base() . $imagedata['url'];
-            $microdata['article']['image']['width'] = $imagedata['width'];
-            $microdata['article']['image']['height'] = $imagedata['height'];
-          
-            }
-       }       
-      };
-      // Encode to json
-     /*foreach ($microdata as $key => $value){
-        if ($value === null){
-           unset($microdata[$key]);
         }
-    }*/
-    // $microdata = array_map('array_filter', $microdata);
-    $microdata = $this->cleanArray($microdata);
-    $customjson = $page->header()->add_json ?? null;
-     foreach ($microdata as $key => $value){
-        
-        
-        $jsonscript =   PHP_EOL . '<script type="application/ld+json">' . PHP_EOL . json_encode($microdata[$key], JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT ) . PHP_EOL . '</script>';
-        $outputjson = $outputjson . $jsonscript;
-      }
-    if(!empty($customjson)){
-      foreach($customjson as $json){
-        $buildjson = PHP_EOL . '<script type="application/ld+json">' . PHP_EOL . $json['custom_json'] . PHP_EOL . '</script>';
-        $outputcustomjson = $outputcustomjson . $buildjson ;
-      }
-      $outputjson = $outputjson . $outputcustomjson;
+
+        if (property_exists($page->header(), 'orgaratingenabled') && $page->header()->orgaratingenabled) {
+            $orgarating = [
+                '@type'       => 'AggregateRating',
+                'ratingValue' => $orga['ratingValue'] ?? null,
+                'reviewCount' => $orga['reviewCount'] ?? null,
+            ];
+        }
+
+        $result[] = [
+            '@context'        => 'https://schema.org',
+            '@type'           => 'Organization',
+            'name'            => $orga['name'] ?? null,
+            'legalname'       => $orga['legalname'] ?? null,
+            'taxid'           => $orga['taxid'] ?? null,
+            'vatid'           => $orga['vatid'] ?? null,
+            'areaServed'      => $areaservedarray ?: null,
+            'description'     => $orga['description'] ?? null,
+            'address'         => [
+                '@type'           => 'PostalAddress',
+                'streetAddress'   => $orga['streetaddress'] ?? null,
+                'addressLocality' => $orga['city'] ?? null,
+                'addressRegion'   => $orga['state'] ?? null,
+                'postalCode'      => $orga['zipcode'] ?? null,
+            ],
+            'telephone'       => $orga['phone'] ?? null,
+            'logo'            => $orga['logo'] ?? null,
+            'url'             => $orga['url'] ?? null,
+            'openingHours'    => $openingHours ?: null,
+            'email'           => $orga['email'] ?? null,
+            'foundingDate'    => $orga['foundingDate'] ?? null,
+            'aggregateRating' => $orgarating,
+            'paymentAccepted' => $orga['paymentAccepted'] ?? null,
+            'founders'        => $founderarray ?: null,
+            'sameAs'          => $similararray ?: null,
+            'hasOfferCatalog' => $offerarray ?: null,
+        ];
+
+        return $result;
     }
-          
-      
-      $this->grav['twig']->twig_vars['json'] = $outputjson;
-      $this->grav['twig']->twig_vars['myvar'] = $outputjson;
-      $this->jsonLdOutput = $outputjson;
-     // return $outputjson;
+
+    private function buildRestaurantMicrodata(Page $page): array
+    {
+        $result = [];
+        if (!property_exists($page->header(), 'restaurantenabled')) return $result;
+        if (!$page->header()->restaurantenabled || !$this->config['plugins']['seo']['restaurant']) return $result;
+
+        $restaurant      = $page->header()->restaurant ?? [];
+        $restaurantimage = null;
+
+        if (isset($restaurant['image'])) {
+            $imagedata       = $this->seoGetimage($restaurant['image']);
+            $restaurantimage = [
+                '@type'  => 'ImageObject',
+                'width'  => $imagedata['width'],
+                'height' => $imagedata['height'],
+                'url'    => $this->grav['uri']->base() . $imagedata['url'],
+            ];
+        }
+
+        $result[] = [
+            '@context'      => 'https://schema.org',
+            '@type'         => 'Restaurant',
+            'name'          => $restaurant['name'] ?? null,
+            'address'       => [
+                '@type'           => 'PostalAddress',
+                'addressLocality' => $restaurant['address_addressLocality'] ?? null,
+                'addressRegion'   => $restaurant['address_addressRegion'] ?? null,
+                'streetAddress'   => $restaurant['address_streetAddress'] ?? null,
+                'postalCode'      => $restaurant['address_postalCode'] ?? null,
+            ],
+            'servesCuisine' => $restaurant['servesCuisine'] ?? null,
+            'priceRange'    => $restaurant['priceRange'] ?? null,
+            'image'         => $restaurantimage,
+            'telephone'     => $restaurant['telephone'] ?? null,
+        ];
+
+        return $result;
+    }
+
+    private function buildProductMicrodata(Page $page): array
+    {
+        $result = [];
+        if (!property_exists($page->header(), 'productenabled')) return $result;
+        if (!$page->header()->productenabled || !$this->config['plugins']['seo']['product']) return $result;
+
+        $product      = $page->header()->product ?? [];
+        $productimage = [];
+        $offer        = [];
+
+        foreach ($product['image'] ?? [] as $imagearray) {
+            foreach ($imagearray as $imagepath) {
+                $imagedata      = $this->seoGetimage($imagepath);
+                $productimage[] = $this->grav['uri']->base() . $imagedata['url'];
+            }
+        }
+        foreach ($product['addoffer'] ?? [] as $key => $offerdata) {
+            $offer[$key] = [
+                '@type'          => 'Offer',
+                'priceCurrency'  => $offerdata['offer_priceCurrency'] ?? null,
+                'price'          => $offerdata['offer_price'] ?? null,
+                'validFrom'      => $offerdata['offer_validFrom'] ?? null,
+                'priceValidUntil' => $offerdata['offer_validUntil'] ?? null,
+                'availability'   => $offerdata['offer_availability'] ?? null,
+            ];
+        }
+
+        $result[] = [
+            '@context'        => 'https://schema.org',
+            '@type'           => 'Product',
+            'name'            => $product['name'] ?? null,
+            'category'        => $product['category'] ?? null,
+            'brand'           => ['@type' => 'Thing', 'name' => $product['brand'] ?? null],
+            'offers'          => $offer ?: null,
+            'description'     => $product['description'] ?? null,
+            'image'           => $productimage ?: null,
+            'aggregateRating' => [
+                '@type'       => 'AggregateRating',
+                'ratingValue' => $product['ratingValue'] ?? null,
+                'reviewCount' => $product['reviewCount'] ?? null,
+            ],
+        ];
+
+        return $result;
+    }
+
+    private function buildArticleMicrodata(Page $page, string $content): array
+    {
+        if (!property_exists($page->header(), 'articleenabled')) return [];
+        if (!$page->header()->articleenabled || !$this->config['plugins']['seo']['article']) return [];
+
+        $article  = $page->header()->article ?? [];
+        $microdata = [
+            '@context'          => 'https://schema.org',
+            '@type'             => 'Article',
+            'headline'          => $article['headline'] ?? $page->title(),
+            'mainEntityOfPage'  => ['@type' => 'WebPage', 'url' => $this->grav['uri']->base()],
+            'articleBody'       => $this->cleanMarkdown($content),
+            'datePublished'     => date("c", strtotime($article['datePublished'] ?? '') ?: $page->date()),
+            'dateModified'      => date("c", strtotime($article['dateModified'] ?? '') ?: $page->date()),
+            'description'       => $article['description'] ?? substr($content, 0, 140),
+        ];
+
+        if (isset($article['author'])) {
+            $microdata['author'] = $article['author'];
+        }
+        if (isset($article['publisher_name'])) {
+            $microdata['publisher'] = ['@type' => 'Organization', 'name' => $article['publisher_name']];
+        }
+        if (isset($article['publisher_logo_url'])) {
+            $imagedata = $this->seoGetimage($article['publisher_logo_url']);
+            $microdata['publisher']['logo'] = [
+                '@type'  => 'ImageObject',
+                'url'    => $this->grav['uri']->base() . $imagedata['url'],
+                'width'  => $imagedata['width'],
+                'height' => $imagedata['height'],
+            ];
+        }
+        if (isset($article['image_url'])) {
+            $imagedata = $this->seoGetimage($article['image_url']);
+            $microdata['image'] = [
+                '@type'  => 'ImageObject',
+                'url'    => $this->grav['uri']->base() . $imagedata['url'],
+                'width'  => $imagedata['width'],
+                'height' => $imagedata['height'],
+            ];
+        }
+
+        return $microdata;
     }
 
      
