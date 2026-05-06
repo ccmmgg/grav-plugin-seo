@@ -38,6 +38,7 @@ use Grav\Common\Iterator;
 class SeoPlugin extends Plugin
 {
     private string $jsonLdOutput = '';
+    private string $canonicalUrl = '';
 
     /** -------------
      * Public methods
@@ -226,6 +227,7 @@ class SeoPlugin extends Plugin
         $this->grav['twig']->twig_vars['json'] = $outputjson;
         $this->grav['twig']->twig_vars['myvar'] = $outputjson;
         $this->jsonLdOutput = $outputjson;
+        $this->canonicalUrl = $page->canonical(true);
     }
 
     private function buildMusicEventMicrodata(Page $page): array
@@ -719,11 +721,16 @@ class SeoPlugin extends Plugin
 
     public function onOutputGenerated()
     {
-        if (empty($this->jsonLdOutput)) {
+        $inject = '';
+        if (!empty($this->canonicalUrl)) {
+            $inject .= PHP_EOL . '<link rel="canonical" href="' . htmlspecialchars($this->canonicalUrl, ENT_QUOTES, 'UTF-8') . '">';
+        }
+        $inject .= $this->jsonLdOutput;
+        if (empty($inject)) {
             return;
         }
         $output = &$this->grav->output;
-        $output = str_replace('</head>', $this->jsonLdOutput . '</head>', $output);
+        $output = str_replace('</head>', $inject . '</head>', $output);
     }
 
     public function onTwigTemplatePaths()
