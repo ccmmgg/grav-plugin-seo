@@ -37,6 +37,7 @@ use Grav\Common\Iterator;
 
 class SeoPlugin extends Plugin
 {
+    private string $jsonLdOutput = '';
 
     /** -------------
      * Public methods
@@ -210,8 +211,8 @@ private function seoGetImage(?string $imageUrl): array
 
         // Set default events
         $events = [
-            'onTwigTemplatePaths' => ['onTwigTemplatePaths', 0],
-           // 'onPageContentRaw' => ['onPageContentRaw', 0],
+            'onTwigTemplatePaths'  => ['onTwigTemplatePaths', 0],
+            'onOutputGenerated'    => ['onOutputGenerated', 0],
         ];
 
         // Set admin specific events
@@ -850,13 +851,9 @@ private function seoGetImage(?string $imageUrl): array
     }
           
       
-      $outputjson = '</script>' . $outputjson . '<script>';
       $this->grav['twig']->twig_vars['json'] = $outputjson;
       $this->grav['twig']->twig_vars['myvar'] = $outputjson;
-      //Do not add to addInlineJs if there is no microdata
-       if($outputjson != "</script><script>"){
-      $assets->addInlineJs($outputjson, 100);
-      }
+      $this->jsonLdOutput = $outputjson;
      // return $outputjson;
     }
 
@@ -886,6 +883,15 @@ private function seoGetImage(?string $imageUrl): array
         
     }
 
+
+    public function onOutputGenerated()
+    {
+        if (empty($this->jsonLdOutput)) {
+            return;
+        }
+        $output = &$this->grav->output;
+        $output = str_replace('</head>', $this->jsonLdOutput . '</head>', $output);
+    }
 
     public function onTwigTemplatePaths()
     {
