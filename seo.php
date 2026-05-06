@@ -68,6 +68,14 @@ class SeoPlugin extends Plugin
         return $array;
     }
 
+    private function resolvePublicUrl(string $value): string
+    {
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            return $value;
+        }
+        return rtrim($this->grav['uri']->base(), '/') . '/' . ltrim($value, '/');
+    }
+
     private function seoGetImage(?string $imageUrl): array
     {
         if (empty($imageUrl)) {
@@ -769,7 +777,7 @@ class SeoPlugin extends Plugin
         } elseif (!empty($this->config['plugins']['seo']['default_social_image'])) {
             $meta['twitter:image'] = [
                 'name' => 'twitter:image', 'property' => 'twitter:image',
-                'content' => $this->config['plugins']['seo']['default_social_image'],
+                'content' => $this->resolvePublicUrl($this->config['plugins']['seo']['default_social_image']),
             ];
         }
         $meta['twitter:url'] = ['name' => 'twitter:url', 'property' => 'twitter:url', 'content' => $page->url(true)];
@@ -826,7 +834,7 @@ class SeoPlugin extends Plugin
             $first  = array_shift($images);
             $meta['og:image'] = ['property' => 'og:image', 'content' => $this->grav['uri']->base() . $first->url()];
         } elseif (!empty($this->config['plugins']['seo']['default_social_image'])) {
-            $meta['og:image'] = ['property' => 'og:image', 'content' => $this->config['plugins']['seo']['default_social_image']];
+            $meta['og:image'] = ['property' => 'og:image', 'content' => $this->resolvePublicUrl($this->config['plugins']['seo']['default_social_image'])];
         }
         return $meta;
     }

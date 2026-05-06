@@ -61,8 +61,8 @@ form:
     default_social_image:
       type: text
       label: Default Social Image URL
-      help: Fallback og:image / twitter:image for pages with no image. Use a full URL (https://…).
-      placeholder: 'https://yoursite.com/user/images/og-default.jpg'
+      help: Fallback og:image / twitter:image. Local path (e.g. /user/images/og.jpg) or full URL both work.
+      placeholder: '/user/images/og-default.jpg'
 
     article_section:
       type: section
