@@ -694,7 +694,10 @@ class SeoPlugin extends Plugin
         if (isset($config['facebookid'])) {
             $meta['fb:app_id'] = ['property' => 'fb:app_id', 'content' => $config->facebookid];
         }
-        $meta['og:type'] = ['property' => 'og:type', 'content' => 'article'];
+        $ogType = (property_exists($page->header(), 'articleenabled') && $page->header()->articleenabled)
+            ? 'article'
+            : 'website';
+        $meta['og:type'] = ['property' => 'og:type', 'content' => $ogType];
         $meta['og:url']  = ['property' => 'og:url',  'content' => $this->grav['page']->canonical(true)];
         $fbdesc = isset($page->header()->facebookdesc)
             ? substr($this->cleanMarkdown($page->header()->facebookdesc), 0, 320)
