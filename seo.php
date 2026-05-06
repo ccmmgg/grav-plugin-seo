@@ -233,16 +233,20 @@ class SeoPlugin extends Plugin
 
     private function buildBreadcrumbMicrodata(Page $page): array
     {
-        $ancestors = $page->parents();
-        // Only emit breadcrumbs when there is at least one ancestor above root
-        if (empty($ancestors) || count($ancestors) < 2) {
+        $ancestors = [];
+        $current = $page->parent();
+        while ($current && !$current->root()) {
+            array_unshift($ancestors, $current);
+            $current = $current->parent();
+        }
+
+        if (empty($ancestors)) {
             return [];
         }
 
-        $items   = [];
+        $items    = [];
         $position = 1;
-        foreach (array_reverse($ancestors) as $ancestor) {
-            if ($ancestor->root()) continue;
+        foreach ($ancestors as $ancestor) {
             $items[] = [
                 '@type'    => 'ListItem',
                 'position' => $position++,
