@@ -372,7 +372,6 @@ private function seoGetImage(?string $imageUrl): array
                 $getfirst = array_shift($imgobject);
                 $firstimage = $getfirst->url();
                 //$imagedata = $this->seoGetimage($firstimage);
-                $meta['twitter:image']['content']   = $this->grav['uri']->base() . $firstimage;
                 $meta['og:image']['content'] =  $this->grav['uri']->base() . $firstimage;
             }
        
