@@ -151,6 +151,44 @@ class SeoPlugin extends Plugin
 
         return mb_substr($text, 0, $maxLength);
     }
+
+    private function extractSummary(string $rawContent, int $maxLength = 320): string
+    {
+        // Strip HTML and Twig, normalise line endings
+        $text = strip_tags($rawContent);
+        $text = preg_replace('/{%[\s\S]*?%}/', '', $text);
+        $text = preg_replace('/<!--[\s\S]*?-->/', '', $text);
+        $text = str_replace("\r\n", "\n", $text);
+
+        $paragraphs = preg_split('/\n{2,}/', trim($text));
+
+        foreach ($paragraphs as $para) {
+            $para = trim($para);
+            if ($para === '') continue;
+
+            // Skip headings (lines starting with #)
+            if (preg_match('/^#+\s/', $para)) continue;
+
+            // Strip inline markdown from the paragraph
+            $clean = $para;
+            foreach (self::MARKDOWN_RULES as $pattern => $replacement) {
+                $clean = preg_replace($pattern, $replacement, $clean);
+            }
+            $clean = preg_replace('/\s+/', ' ', trim($clean));
+
+            // Skip if the paragraph is purely list items (no prose sentences)
+            $lines = explode("\n", $para);
+            $allList = count(array_filter($lines, fn($l) => preg_match('/^[*\-+\d]/', trim($l)))) === count($lines);
+            if ($allList) continue;
+
+            if ($clean !== '') {
+                return mb_substr($clean, 0, $maxLength);
+            }
+        }
+
+        // Fallback: flatten everything
+        return $this->cleanMarkdown($rawContent, $maxLength);
+    }
     
 
     /**
@@ -181,7 +219,7 @@ class SeoPlugin extends Plugin
         $page = $this->grav['page'];
         $config = $this->mergeConfig($page);
         $content = strip_tags($page->content());
-        $cleanedMarkdown = $this->cleanMarkdown($page->content());
+        $cleanedMarkdown = $this->extractSummary($page->content());
         $microdata   = [];
         $outputjson  = '';
         $meta        = $page->metadata(null);
