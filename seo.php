@@ -227,7 +227,8 @@ class SeoPlugin extends Plugin
         $page = $this->grav['page'];
         $config = $this->mergeConfig($page);
         $content = strip_tags($page->content());
-        $cleanedMarkdown = $this->extractSummary($page->content());
+        $cleanedMarkdown = $this->extractSummary($page->content())
+            ?: ($this->config['plugins']['seo']['default_description'] ?? '');
         $microdata   = [];
         $outputjson  = '';
         $meta        = $page->metadata(null);

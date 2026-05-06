@@ -58,6 +58,11 @@ form:
       type: section
       title: Social Defaults
       underline: true
+    default_description:
+      type: textarea
+      label: Default Description
+      help: Fallback meta description / og:description for pages with no body content.
+      placeholder: 'Recycled aggregates, base materials, and erosion control products serving Colorado.'
     default_social_image:
       type: text
       label: Default Social Image URL

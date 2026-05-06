@@ -7,6 +7,9 @@ organization: true
 musicevent: true
 person: true
 
+# Global description fallback — used when a page has no content to extract from
+default_description: ''
+
 # Global social image fallback — used when a page has no image and no page media
 default_social_image: ''
 
