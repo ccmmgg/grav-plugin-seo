@@ -21,13 +21,7 @@ namespace Grav\Plugin;
 use Grav\Common\Plugin;
 use Grav\Common\Page\Page;
 use Grav\Common\Data\Blueprints;
-use Grav\Common\Page\Pages;
 use RocketTheme\Toolbox\Event\Event;
-use Grav\Common\Grav;
-use Grav\Common\Page\Media;
-use Grav\Common\Helpers\Exif;
-use Grav\Common\Page\Medium\AbstractMedia;
-use Grav\Common\Iterator;
 
 
 /**
