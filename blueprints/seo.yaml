@@ -833,9 +833,16 @@ form:
                               type: textarea
                               label: Or paste here your own JSON-ld Microdata     
                               placeholder: (do not include the script tags)           
+                inspectorfields:
+                  type: tab
+                  title: Inspector
+                  fields:
+                    header.metainspector:
+                      type: metainspector
+
                 facebookfields:
                   type: tab
-                  title: Facebook 
+                  title: Facebook
                   fields:
                     columns2:
                       type: columns

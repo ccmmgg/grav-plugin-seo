@@ -1,0 +1,138 @@
+{% if admin.route %}
+    {% set context = admin.page(true) %}
+{% endif %}
+
+<script>
+var SEO = {
+    pageTitle:   {{ context.title|default('')|json_encode|raw }},
+    pageUrl:     {{ context.url(true)|default('')|json_encode|raw }},
+    pageSummary: {{ context.summary|default('')|striptags|truncate(160)|json_encode|raw }},
+    siteTitle:   {{ site.title|default('')|json_encode|raw }},
+    defaultDesc: {{ config.plugins.seo.default_description|default('')|json_encode|raw }},
+    defaultImg:  {{ config.plugins.seo.default_social_image|default('')|json_encode|raw }},
+    twitterId:   {{ config.plugins.seo.twitterid|default('')|json_encode|raw }},
+};
+</script>
+
+<style>
+#seo-inspector { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+#seo-inspector th { text-align: left; padding: 6px 10px; background: #f5f5f5; border-bottom: 2px solid #ddd; font-weight: 600; }
+#seo-inspector td { padding: 6px 10px; border-bottom: 1px solid #eee; vertical-align: top; word-break: break-all; }
+#seo-inspector td:first-child { white-space: nowrap; font-family: monospace; color: #555; width: 200px; }
+#seo-inspector .group-header td { background: #fafafa; font-weight: 600; color: #333; font-family: inherit; word-break: normal; padding: 8px 10px 4px; border-bottom: none; }
+.seo-badge { display: inline-block; font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; white-space: nowrap; }
+.seo-badge.direct  { background: #d4edda; color: #155724; }
+.seo-badge.fallback { background: #fff3cd; color: #856404; }
+.seo-badge.default  { background: #d1ecf1; color: #0c5460; }
+.seo-badge.empty    { background: #f8d7da; color: #721c24; }
+</style>
+
+<table id="seo-inspector">
+    <thead>
+        <tr><th>Tag</th><th>Resolved value</th></tr>
+    </thead>
+    <tbody>
+        <tr class="group-header"><td colspan="2">Search</td></tr>
+        <tr><td>title</td><td><span data-tag="title"></span></td></tr>
+        <tr><td>meta:description</td><td><span data-tag="description"></span></td></tr>
+        <tr><td>link:canonical</td><td><span data-tag="canonical"></span></td></tr>
+
+        <tr class="group-header"><td colspan="2">Open Graph</td></tr>
+        <tr><td>og:title</td><td><span data-tag="og:title"></span></td></tr>
+        <tr><td>og:description</td><td><span data-tag="og:description"></span></td></tr>
+        <tr><td>og:type</td><td><span data-tag="og:type"></span></td></tr>
+        <tr><td>og:image</td><td><span data-tag="og:image"></span></td></tr>
+        <tr><td>og:url</td><td><span data-tag="og:url"></span></td></tr>
+        <tr><td>og:site_name</td><td><span data-tag="og:site_name"></span></td></tr>
+
+        <tr class="group-header"><td colspan="2">Twitter</td></tr>
+        <tr><td>twitter:card</td><td><span data-tag="twitter:card"></span></td></tr>
+        <tr><td>twitter:title</td><td><span data-tag="twitter:title"></span></td></tr>
+        <tr><td>twitter:description</td><td><span data-tag="twitter:description"></span></td></tr>
+        <tr><td>twitter:image</td><td><span data-tag="twitter:image"></span></td></tr>
+        <tr><td>twitter:site</td><td><span data-tag="twitter:site"></span></td></tr>
+    </tbody>
+</table>
+
+<script>
+(function () {
+    function badge(source) {
+        var labels = { direct: 'direct', fallback: 'fallback', default: 'default', empty: 'empty' };
+        return '<span class="seo-badge ' + source + '">' + labels[source] + '</span>';
+    }
+
+    function cell(value, source) {
+        if (!value) return badge('empty');
+        return value + badge(source);
+    }
+
+    function resolve() {
+        var googletitle = $('#text').val();
+        var googledesc  = $('#desc').val();
+        var twittertitle = $('#twittertitle').val();
+        var twitterdesc  = $('#twitterdescription').val();
+        var facebooktitle = $('#facebooktitle').val();
+        var facebookdesc  = $('#facebookdesc').val();
+        var twittercard   = $('select[name*="twittercardoptions"]').val() || 'summary';
+
+        // Mediapicker hidden inputs store the selected filename
+        var twImg = $('input[name*="twittershareimg"]').val();
+        var fbImg = $('input[name*="facebookimg"]').val();
+        var articleEnabled = $('input[name*="articleenabled"]').is(':checked') ||
+                             $('select[name*="articleenabled"]').val() == '1';
+
+        // Resolve title
+        var titleVal, titleSrc;
+        if (googletitle) { titleVal = googletitle; titleSrc = 'direct'; }
+        else             { titleVal = SEO.pageTitle + (SEO.siteTitle ? ' | ' + SEO.siteTitle : ''); titleSrc = 'fallback'; }
+
+        // Resolve description
+        var descVal, descSrc;
+        if (googledesc)         { descVal = googledesc;       descSrc = 'direct'; }
+        else if (SEO.defaultDesc) { descVal = SEO.defaultDesc; descSrc = 'default'; }
+        else                    { descVal = SEO.pageSummary;  descSrc = 'fallback'; }
+
+        // Resolve og:image / twitter:image (simplification: show filename or fallback)
+        var imgVal, imgSrc;
+        if (twImg || fbImg) { imgVal = twImg || fbImg; imgSrc = 'direct'; }
+        else if (SEO.defaultImg) { imgVal = SEO.defaultImg; imgSrc = 'default'; }
+        else                { imgVal = ''; imgSrc = 'empty'; }
+
+        // Twitter title
+        var twTitleVal, twTitleSrc;
+        if (twittertitle)  { twTitleVal = twittertitle; twTitleSrc = 'direct'; }
+        else               { twTitleVal = titleVal;     twTitleSrc = titleSrc === 'direct' ? 'fallback' : titleSrc; }
+
+        // Twitter desc
+        var twDescVal, twDescSrc;
+        if (twitterdesc)   { twDescVal = twitterdesc; twDescSrc = 'direct'; }
+        else               { twDescVal = descVal;     twDescSrc = descSrc === 'direct' ? 'fallback' : descSrc; }
+
+        var tags = {
+            'title':            { val: titleVal, src: titleSrc },
+            'description':      { val: descVal,  src: descSrc },
+            'canonical':        { val: SEO.pageUrl, src: 'fallback' },
+            'og:title':         { val: titleVal, src: titleSrc },
+            'og:description':   { val: descVal,  src: descSrc },
+            'og:type':          { val: articleEnabled ? 'article' : 'website', src: articleEnabled ? 'direct' : 'fallback' },
+            'og:image':         { val: imgVal,   src: imgSrc },
+            'og:url':           { val: SEO.pageUrl, src: 'fallback' },
+            'og:site_name':     { val: SEO.siteTitle, src: 'fallback' },
+            'twitter:card':     { val: twittercard, src: 'direct' },
+            'twitter:title':    { val: twTitleVal, src: twTitleSrc },
+            'twitter:description': { val: twDescVal, src: twDescSrc },
+            'twitter:image':    { val: imgVal,   src: imgSrc },
+            'twitter:site':     { val: SEO.twitterId ? '@' + SEO.twitterId : '', src: SEO.twitterId ? 'default' : 'empty' },
+        };
+
+        $.each(tags, function (tag, t) {
+            $('[data-tag="' + tag + '"]').html(cell(t.val, t.src));
+        });
+    }
+
+    $(document).ready(function () {
+        resolve();
+        $(document).on('keyup change', '#text, #desc, #twittertitle, #twitterdescription, #facebooktitle, #facebookdesc, select[name*="twittercardoptions"], input[name*="articleenabled"], select[name*="articleenabled"], input[name*="twittershareimg"], input[name*="facebookimg"]', resolve);
+    });
+}());
+</script>
